@@ -1,6 +1,7 @@
 (ns geheimtur.core
   (:require [io.pedestal.service.interceptor :as interceptor :refer [interceptor definterceptorfn]]
-            [io.pedestal.service.log :as log])
+            [io.pedestal.service.log :as log]
+            [geheimtur.response :as http-response])
   (:import org.apache.commons.codec.binary.Base64))
 
 (defn authenticate
@@ -65,18 +66,6 @@
 ;; =========================== BEGIN HTTP BASIC ===========================
 ;;
 
-(defn http-basic-not-authorized
-  [realm reason]
-  {:status 401
-   :body reason
-   :headers {"WWW-Authenticate" (format "Basic realm=\"%s\"" realm)}})
-
-(defn http-forbidden
-  []
-  {:status 403
-   :body "You are not allowed to access to this resource"
-   :headers {}})
-
 (defn parse-authorization-header
   "Parces Authorization header of HTTP request."
   [authorization]
@@ -101,25 +90,25 @@
   (if-let [authorization (get-in context [:request :headers "authorization"])]
     (if-let [identity (http-basic-identity authorization credential-fn)]
       (authenticate context identity)
-      (assoc context :response (http-forbidden)))
+      (assoc context :response (http-response/forbidden)))
     context))
 
 (defn http-basic-error-handler
   "The default handler for HTTP Basic authentication/authorization errors."
   [realm]
   (fn [context error]
-    (assoc context :response (http-basic-not-authorized realm (:reason error)))))
+    (assoc context :response (http-response/unauthorized realm (:reason error)))))
 
 (definterceptorfn http-basic
   "An interceptor that provides HTTP Basic authentication for your application
    and handles authentication/authorization errors."
   [realm credential-fn]
   (interceptor :name ::http-basic-auth
-    :enter (fn [context]
-             (if-not (authenticated? context)
-               (http-basic-authorize context credential-fn)
-               context))
-    :error (access-forbidden-catcher (http-basic-error-handler realm))))
+               :enter (fn [context]
+                        (if-not (authenticated? context)
+                          (http-basic-authorize context credential-fn)
+                          context))
+               :error (access-forbidden-catcher (http-basic-error-handler realm))))
 
 ;;
 ;; =========================== END HTTP BASIC ===========================
