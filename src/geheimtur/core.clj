@@ -34,13 +34,14 @@
   [roles unauthenticated-fn unauthorized-fn]
   (fn [context]
     (if (authenticated? context)
-      (if-not (authorized? context roles)
+      (if-not (or (empty? roles)
+                (authorized? context roles))
         (unauthorized-fn context)
         context)
       (unauthenticated-fn context))))
 
 (definterceptorfn guard
-  [roles & {:keys [unauthenticated-fn unauthorized-fn silent?] :or {silent? true}}]
+  [& {:keys [roles unauthenticated-fn unauthorized-fn silent?] :or {silent? true}}]
   (let [unauthenticated-fn (or unauthenticated-fn (access-forbidden-handler silent? :type :unauthenticated))
         unauthorized-fn (or unauthorized-fn (access-forbidden-handler silent?))]
     (interceptor :name ::guard

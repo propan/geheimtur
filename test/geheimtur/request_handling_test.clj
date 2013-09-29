@@ -28,19 +28,23 @@
      ["/http-basic" ^:interceptors [(http-basic "Test Realm" (constantly true))]
 
       ["/anonymous"
-        ["/loud" {:get [:anonymous-silent request-handler]} ^:interceptors [(guard #{:user} :silent? false)]]
-        ["/silent" {:get [:anonymous-loud request-handler]} ^:interceptors [(guard #{:user})]]
+        ["/loud" {:get [:anonymous-silent request-handler]} ^:interceptors [(guard :silent? false)]]
+        ["/silent" {:get [:anonymous-loud request-handler]} ^:interceptors [(guard)]]
        ]
 
       ["/identified"
+       ["/no-role" ^:interceptors [(identity-injector {})]
+         ["/ok" {:get [:no-role-ok request-handler]} ^:interceptors [(guard)]]
+         ["/not-ok" {:get [:no-role-not-ok request-handler]} ^:interceptors [(guard :roles #{:user} :silent? false)]]
+         ]
        ["/user" ^:interceptors [(identity-injector {:roles #{:user }})]
-          ["/ok" {:get [:user-ok request-handler]} ^:interceptors [(guard #{:user})]]
-          ["/not-enough-rights" {:get [:not-enough-rights request-handler]} ^:interceptors [(guard #{:admin})]]
-          ["/not-enough-rights-loud" {:get [:not-enough-rights-silent request-handler]} ^:interceptors [(guard #{:admin} :silent? false)]]
+          ["/ok" {:get [:user-ok request-handler]} ^:interceptors [(guard :roles #{:user})]]
+          ["/not-enough-rights" {:get [:not-enough-rights request-handler]} ^:interceptors [(guard :roles #{:admin})]]
+          ["/not-enough-rights-loud" {:get [:not-enough-rights-silent request-handler]} ^:interceptors [(guard :roles #{:admin} :silent? false)]]
         ]
        ["/admin" ^:interceptors [(identity-injector {:roles #{:admin }})]
-        ["/ok" {:get [:admin-ok request-handler]} ^:interceptors [(guard #{:admin})]]
-        ["/user/ok" {:get [:admin-user-ok request-handler]} ^:interceptors [(guard #{:user :admin})]]
+        ["/ok" {:get [:admin-ok request-handler]} ^:interceptors [(guard :roles #{:admin})]]
+        ["/user/ok" {:get [:admin-user-ok request-handler]} ^:interceptors [(guard :roles #{:user :admin})]]
         ]
        ]
 
@@ -59,6 +63,9 @@
     ;; anonymous access
     "http://geheimtur.io/http-basic/anonymous/loud" "You are not allowed to access to this resource"
     "http://geheimtur.io/http-basic/anonymous/silent" "Not Found"
+    ;; user with no roles assigned
+    "http://geheimtur.io/http-basic/identified/no-role/ok" "Request handled!"
+    "http://geheimtur.io/http-basic/identified/no-role/not-ok" "You are not allowed to access to this resource"
     ;; user access
     "http://geheimtur.io/http-basic/identified/user/ok" "Request handled!"
     "http://geheimtur.io/http-basic/identified/user/not-enough-rights" "Not Found"
