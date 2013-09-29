@@ -66,24 +66,18 @@
 ;; =========================== BEGIN HTTP BASIC ===========================
 ;;
 
-(defn parse-authorization-header
-  "Parces Authorization header of HTTP request."
-  [authorization]
-  (if-let [[[_ username password]] (try (-> (re-matches #"\s*Basic\s+(.+)" authorization)
-                                          ^String second
-                                          (.getBytes "UTF-8")
-                                          Base64/decodeBase64
-                                          (String. "UTF-8")
-                                          (#(re-seq #"([^:]*):(.*)" %)))
-                                     (catch Exception e
-                                       (log/info :msg (str "Invalid Authorization header for HTTP Basic auth: "
-                                                        authorization))))]
-    [username password]))
-
 (defn http-basic-identity
   [authorization credential-fn]
-  (if-let [[username password] (parse-authorization-header authorization)]
-    (credential-fn username password)))
+  (let [[[_ username password]] (try (-> (re-matches #"\s*Basic\s+(.+)" authorization)
+                                       ^String second
+                                       (.getBytes "UTF-8")
+                                       Base64/decodeBase64
+                                       (String. "UTF-8")
+                                       (#(re-seq #"([^:]*):(.*)" %)))
+                                  (catch Exception e
+                                    (log/info :msg (str "Invalid Authorization header for HTTP Basic auth: "
+                                                     authorization))))]
+    (and username password (credential-fn username password))))
 
 (defn http-basic-authorize
   [context credential-fn]
