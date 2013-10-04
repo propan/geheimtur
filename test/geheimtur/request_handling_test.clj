@@ -1,9 +1,10 @@
 (ns ^{:doc "Integration tests of request handling with the geheimtur interceptors."}
   geheimtur.request-handling-test
   (:require [io.pedestal.service.http.route.definition :refer [defroutes]]
-            [io.pedestal.service.interceptor :as interceptor :refer [definterceptorfn defhandler interceptor]]
+            [io.pedestal.service.interceptor :refer [definterceptorfn defhandler interceptor]]
             [io.pedestal.service.http :as service]
-            [geheimtur.core :as core :refer :all ])
+            [geheimtur.util.auth :refer [authenticate]]
+            [geheimtur.interceptor :as interceptor :refer :all ])
   (:use [clojure.test]
         [io.pedestal.service.test]))
 

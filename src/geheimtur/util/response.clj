@@ -1,4 +1,4 @@
-(ns geheimtur.response)
+(ns geheimtur.util.response)
 
 (defn forbidden
   "Returns an HTTP 403 Forbidden response."

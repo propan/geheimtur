@@ -1,9 +1,8 @@
-(ns geheimtur.core-test
+(ns geheimtur.util.auth-test
   (:require [clojure.test :refer :all ]
-            [geheimtur.core :as core :refer :all ]
-            ))
+            [geheimtur.util.auth :as core :refer :all ]))
 
-(defn create-context
+(defn- create-context
   [roles]
   {::core/identity {:roles roles}})
 
@@ -15,3 +14,4 @@
       true (create-context #{:user })
       false (create-context #{:user :editor })
       false (create-context #{:user :writer :editor }))))
+
