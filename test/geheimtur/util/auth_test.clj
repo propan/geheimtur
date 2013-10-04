@@ -4,7 +4,12 @@
 
 (defn- create-context
   [roles]
-  {::core/identity {:roles roles}})
+  {:request {::core/identity {:roles roles}}})
+
+(deftest authenticate-test
+  (are [res context] (= res (authenticated? context))
+    false {}
+    true (authenticate {} {:name "Dale" :last-name "Cooper" :roles #{:agent }})))
 
 (deftest authorized-test
   (let [allowed-roles #{:editor :writer }]

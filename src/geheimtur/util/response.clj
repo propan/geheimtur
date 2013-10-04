@@ -1,4 +1,5 @@
-(ns geheimtur.util.response)
+(ns geheimtur.util.response
+  "Contains functions to create Ring responses.")
 
 (defn forbidden
   "Returns an HTTP 403 Forbidden response."
