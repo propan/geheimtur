@@ -10,4 +10,5 @@
                  ;; base64
                  [commons-codec "1.6"]
                  ;; integration tests
-                 [javax.servlet/javax.servlet-api "3.0.1" :scope "test"]])
+                 [javax.servlet/javax.servlet-api "3.0.1" :scope "test"]
+                 [org.slf4j/slf4j-nop "1.7.5" :scope "test"]])
