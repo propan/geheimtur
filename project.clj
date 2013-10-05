@@ -5,6 +5,8 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [io.pedestal/pedestal.service "0.2.1"]
+                 ;; BCrypt
+                 [org.mindrot/jbcrypt "0.3m"]
                  ;; base64
                  [commons-codec "1.6"]
                  ;; integration tests
