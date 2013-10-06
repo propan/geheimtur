@@ -1,15 +1,11 @@
 (ns geheimtur.interceptor
   (:require [io.pedestal.service.interceptor :as interceptor :refer [interceptor definterceptorfn]]
-            [geheimtur.util.auth :refer [authorized? authenticated?]]
+            [geheimtur.util.auth :as auth :refer [authorized? authenticated? throw-forbidden]]
             [geheimtur.impl.http-basic :refer [http-basic-authenticate http-basic-error-handler]]))
-
-(defn throw-forbidden
-  [info]
-  (throw (ex-info "403 Forbidden" (merge {::type :unauthorized} info))))
 
 (defn access-forbidden-handler
   [silent? & {:keys [type reason reason-fn]
-              :or {type :unauthorized reason "You are not allowed to access to this resource"}}]
+              :or {type :unauthenticated reason "You are not allowed to access to this resource"}}]
   (let [reason-fn (or reason-fn (constantly reason))]
     (fn [context]
       (throw-forbidden {:silent? silent? :reason (reason-fn type context)}))))
@@ -26,8 +22,8 @@
 
 (definterceptorfn guard
   [& {:keys [roles unauthenticated-fn unauthorized-fn silent?] :or {silent? true}}]
-  (let [unauthenticated-fn (or unauthenticated-fn (access-forbidden-handler silent? :type :unauthenticated))
-        unauthorized-fn (or unauthorized-fn (access-forbidden-handler silent?))]
+  (let [unauthenticated-fn (or unauthenticated-fn (access-forbidden-handler silent?))
+        unauthorized-fn (or unauthorized-fn (access-forbidden-handler silent? :type :unauthorized))]
     (interceptor :name ::guard
                  :enter (guard-with roles unauthenticated-fn unauthorized-fn))))
 ;;
@@ -38,7 +34,7 @@
   [error-handler]
   (fn [context error]
     (let [error-data (ex-data error)
-          type (::type error-data)]
+          type (::auth/type error-data)]
       (if-not (nil? type)
         (if (true? (:silent? error-data))
           (dissoc context :response ) ;; that will cause 404 error

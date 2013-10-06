@@ -1,22 +1,22 @@
 (ns geheimtur.util.auth-test
   (:require [clojure.test :refer :all ]
-            [geheimtur.util.auth :as core :refer :all ]))
+            [geheimtur.util.auth :as auth :refer :all ]))
 
-(defn- create-context
+(defn- create-request
   [roles]
-  {:request {::core/identity {:roles roles}}})
+  {:session {::auth/identity {:roles roles}}})
 
 (deftest authenticate-test
-  (are [res context] (= res (authenticated? context))
+  (are [res request] (= res (authenticated? request))
     false {}
     true (authenticate {} {:name "Dale" :last-name "Cooper" :roles #{:agent }})))
 
 (deftest authorized-test
   (let [allowed-roles #{:editor :writer }]
-    (are [forbidden context] (= forbidden (nil? (authorized? context allowed-roles)))
+    (are [forbidden request] (= forbidden (nil? (authorized? request allowed-roles)))
       true {}
-      true (create-context {})
-      true (create-context #{:user })
-      false (create-context #{:user :editor })
-      false (create-context #{:user :writer :editor }))))
+      true (create-request {})
+      true (create-request #{:user })
+      false (create-request #{:user :editor })
+      false (create-request #{:user :writer :editor }))))
 
