@@ -46,8 +46,9 @@
    and handles authentication/authorization errors."
   [realm credential-fn]
   (interceptor :name ::http-basic-auth
-               :enter (fn [context]
-                        (if-not (authenticated? context)
+               :enter (fn [{request :request
+                            :as context}]
+                        (if-not (authenticated? request)
                           (http-basic-authenticate context credential-fn)
                           context))
                :error (access-forbidden-catcher (http-basic-error-handler realm))))
