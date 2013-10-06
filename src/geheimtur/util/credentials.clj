@@ -21,7 +21,7 @@
   "Hashes a given plaintext password using PBKDF2, an optional
    :iterations count (defaults to 10000) and an optional salt
    (a byte array, defaults to a random array of size 8)."
-  [password & {:keys [iterations salt] :or {iterations 10000}}]
+  [^String password & {:keys [iterations salt] :or {iterations 10000}}]
   (let [salt (or salt (gen-salt))
         spec (PBEKeySpec. (.toCharArray password) salt iterations 160)
         bytes (.. (SecretKeyFactory/getInstance "PBKDF2WithHmacSHA1")
@@ -33,7 +33,7 @@
   "Returns true if the plaintext [password] corresponds to [hash],
   the result of previously hashing that password."
   [password hash]
-  (if-let [[[_ salt iterations _]] (re-seq #"([^:]*):(\d+):(.*)" hash)]
+  (if-let [[[_ ^String salt ^String iterations _]] (re-seq #"([^:]*):(\d+):(.*)" hash)]
     (= hash (pbkdf2-hash password :iterations (Integer. iterations) :salt (Base64/decodeBase64 salt)))
     false))
 

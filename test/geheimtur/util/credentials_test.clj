@@ -1,6 +1,6 @@
 (ns geheimtur.util.credentials-test
   (:require [clojure.test :refer :all ]
-            [geheimtur.util.credentials :as core :refer :all ]))
+            [geheimtur.util.credentials :refer :all ]))
 
 (deftest pbkdf2-hashing
   (are [res hash] (= res (pbkdf2-verify "password" hash))
