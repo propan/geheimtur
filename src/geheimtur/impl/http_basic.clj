@@ -21,7 +21,7 @@
   [context credential-fn]
   (if-let [authorization (get-in context [:request :headers "authorization"])]
     (if-let [identity (http-basic-identity authorization credential-fn)]
-      (authenticate context identity)
+      (update-in context [:request] authenticate identity)
       (assoc context :response (response/forbidden)))
     context))
 

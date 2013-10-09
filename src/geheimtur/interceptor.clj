@@ -1,6 +1,9 @@
 (ns geheimtur.interceptor
   (:require [io.pedestal.service.interceptor :as interceptor :refer [interceptor definterceptorfn]]
             [geheimtur.util.auth :as auth :refer [authorized? authenticated? throw-forbidden]]
+            [geheimtur.util.response :as response]
+            [io.pedestal.service.log :as log]
+            [geheimtur.impl.form-based :as form-based :refer [form-based-authenticate form-based-error-handler]]
             [geheimtur.impl.http-basic :refer [http-basic-authenticate http-basic-error-handler]]))
 
 (defn access-forbidden-handler
@@ -12,10 +15,10 @@
 
 (defn- guard-with
   [roles unauthenticated-fn unauthorized-fn]
-  (fn [context]
-    (if (authenticated? context)
+  (fn [{request :request :as context}]
+    (if (authenticated? request)
       (if-not (or (empty? roles)
-                (authorized? context roles))
+                (authorized? request roles))
         (unauthorized-fn context)
         context)
       (unauthenticated-fn context))))
@@ -52,3 +55,19 @@
                           (http-basic-authenticate context credential-fn)
                           context))
                :error (access-forbidden-catcher (http-basic-error-handler realm))))
+
+(definterceptorfn form-based
+  "An interceptor that provides Form-based authentication for your application
+   and handles authentication/authorization errors. Should be added before
+   the routing interceptor."
+  [config]
+  (let [config (merge {:login-uri "/login"
+                       :logout-uri "/logout"
+                       :credential-fn (constantly nil)
+                       :redirect-on-login true
+                       :login-handler form-based/default-login-handler
+                       :logout-handler form-based/default-logout-handler} config)]
+    (interceptor :name ::form-based-auth
+      :enter (fn [context]
+               (form-based-authenticate context config))
+      :error (access-forbidden-catcher (form-based-error-handler config)))))

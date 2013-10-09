@@ -6,6 +6,11 @@
   [request identity]
   (assoc-in request [:session ::identity ] identity))
 
+(defn authenticate-response
+  "Authenticated a given response."
+  [response identity]
+  (assoc-in response [:session ::identity ] identity))
+
 (defn authenticated?
   "Checks if a request is authenticated."
   [request]
@@ -20,9 +25,7 @@
 (defn logout
   "Cleans up a given context of identity information."
   [context]
-  (-> context
-    (update-in [:request :session ] dissoc ::identity)
-    (update-in [:response :session ] dissoc ::identity)))
+  (assoc-in context [:response :session ::identity] nil))
 
 (defn throw-forbidden
   "Throws the access forbbidden exception with [info] content.

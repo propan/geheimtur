@@ -21,7 +21,7 @@
   [identity]
   (interceptor :name ::identity-injector
                :enter (fn [context]
-                        (authenticate context identity))))
+                        (update-in context [:request] authenticate identity))))
 
 (defroutes routes
   [[:request-handling "geheimtur.io"
