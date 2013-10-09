@@ -7,7 +7,7 @@
   [form]
   [(get form "username") (get form "password")])
 
-(defn- form-basic-identity
+(defn- form-based-identity
   [form credential-fn]
   (let [[username password] (default-form-reader form)]
     (and username password (credential-fn username password))))
@@ -19,7 +19,7 @@
       (let [redirect? (:redirect-on-login config)
             return-url (when redirect?
                          (get-in request [:params :return ]))]
-        (if-let [identity (form-basic-identity form-params (:credential-fn config))]
+        (if-let [identity (form-based-identity form-params (:credential-fn config))]
           (-> context
             (assoc :response (response/redirect-after-post (if (and return-url
                                                                  (url/relative? return-url))
