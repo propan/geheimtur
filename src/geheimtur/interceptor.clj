@@ -11,7 +11,7 @@
               :or {type :unauthenticated reason "You are not allowed to access to this resource"}}]
   (let [reason-fn (or reason-fn (constantly reason))]
     (fn [context]
-      (throw-forbidden {:silent? silent? :reason (reason-fn type context)}))))
+      (throw-forbidden {:silent? silent? ::auth/type type :reason (reason-fn type context)}))))
 
 (defn- guard-with
   [roles unauthenticated-fn unauthorized-fn]
