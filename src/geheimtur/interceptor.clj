@@ -24,14 +24,18 @@
       (unauthenticated-fn context))))
 
 (definterceptorfn guard
+  "An interceptor that allows only authenticated users that have any of :roles to access unterlying pages.
+
+   Accepts optional parameters:
+   :roles              - a set of roles that are allowed to access the page, if not defined users are required to be just authenticated
+   :silent?            - if set to `true` (default), users will be getting 404 Not Found error page, when they don't have enougth access rights
+   :unauthenticated-fn - a handler of unauthenticated error state
+   :unauthorized-fn    - a handler of unauthorized error state"
   [& {:keys [roles unauthenticated-fn unauthorized-fn silent?] :or {silent? true}}]
   (let [unauthenticated-fn (or unauthenticated-fn (access-forbidden-handler silent?))
         unauthorized-fn (or unauthorized-fn (access-forbidden-handler silent? :type :unauthorized))]
     (interceptor :name ::guard
                  :enter (guard-with roles unauthenticated-fn unauthorized-fn))))
-;;
-;;
-;;
 
 (defn- access-forbidden-catcher
   [error-handler]
