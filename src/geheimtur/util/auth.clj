@@ -11,6 +11,7 @@
   [request identity]
   (assoc-in request [:session ::identity] identity))
 
+;; TODO: remove
 (defn authenticate-response
   "Authenticated the given response."
   [response identity]
