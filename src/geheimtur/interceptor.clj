@@ -3,7 +3,8 @@
             [geheimtur.util.auth :as auth :refer [authorized? authenticated? throw-forbidden]]
             [geheimtur.util.response :as response]
             [io.pedestal.service.log :as log]
-            [geheimtur.impl.form-based :as form-based :refer [form-based-error-handler]]
+            [geheimtur.impl.interactive :refer [interactive-error-handler]]
+            [geheimtur.impl.form-based :as form-based]
             [geheimtur.impl.http-basic :refer [http-basic-authenticate http-basic-error-handler]]))
 
 (defn access-forbidden-handler
@@ -60,10 +61,10 @@
                           context))
                :error (access-forbidden-catcher (http-basic-error-handler realm))))
 
-(definterceptorfn form-based
-  "An interceptor that provides Form-based authentication approach for
+(definterceptorfn interactive
+  "An interceptor that provides interactive authentication flow for
    handling authentication/authorization errors in your application."
   [config]
   (let [config (merge {:login-uri "/login"} config)]
-    (interceptor :name ::form-based-auth
-                 :error (access-forbidden-catcher (form-based-error-handler config)))))
+    (interceptor :name ::interactive-auth
+                 :error (access-forbidden-catcher (interactive-error-handler config)))))
