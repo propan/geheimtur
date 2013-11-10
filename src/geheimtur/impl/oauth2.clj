@@ -60,7 +60,7 @@
 
 (defn fetch-token
   "Fetches an OAuth access token using the given code and provider's configuration."
-  [code {:keys [token-url client-id client-secret callback-uri]}]
+  [code {:keys [token-url client-id client-secret callback-uri] :as provider}]
   (let [query {:code          code
                :client_id     client-id
                :client_secret client-secret
