@@ -7,15 +7,9 @@
   (get-in request [:session ::identity]))
 
 (defn authenticate
-  "Authenticates the given request."
-  [request identity]
-  (assoc-in request [:session ::identity] identity))
-
-;; TODO: remove
-(defn authenticate-response
-  "Authenticated the given response."
-  [response identity]
-  (assoc-in response [:session ::identity] identity))
+  "Authenticates the given request/response."
+  [r identity]
+  (assoc-in r [:session ::identity] identity))
 
 (defn authenticated?
   "Checks if the given request is authenticated."

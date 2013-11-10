@@ -1,6 +1,6 @@
 (ns geheimtur.impl.form-based
   (:require [io.pedestal.service.interceptor :refer [defhandler]]
-            [geheimtur.util.auth :as auth :refer [authenticate-response authenticated? logout]]
+            [geheimtur.util.auth :as auth :refer [authenticate authenticated? logout]]
             [geheimtur.util.response :as response]
             [geheimtur.util.url :as url]))
 
@@ -26,7 +26,7 @@
           (-> (response/redirect-after-post (if (and return-url
                                                    (url/relative? return-url))
                                                       return-url "/"))
-              (authenticate-response identity))
+              (authenticate identity))
           (let [redirect-url (if return-url
                                (str login-uri "?error=true&return=" return-url)
                                (str login-uri "?error=true"))]
