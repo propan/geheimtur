@@ -1,28 +1,31 @@
 (ns geheimtur.impl.form-based
-  (:require [io.pedestal.service.interceptor :refer [defhandler]]
-            [geheimtur.util.auth :refer [authenticate logout]]
+  (:require [geheimtur.util.auth :refer [authenticate logout]]
             [geheimtur.util.response :as response]
             [geheimtur.util.url :as url]))
 
-(defn default-form-reader
+(defn- default-form-reader
   [form]
   [(get form "username") (get form "password")])
 
-(defn- form-based-identity
-  [form credential-fn]
-  (let [[username password] (default-form-reader form)]
-    (and username password (credential-fn username password))))
-
 (defn default-login-handler
-  [{:keys [credential-fn login-uri redirect-on-login]
-    :or {credential-fn     (constantly nil)
-         login-uri         "/login"
-         redirect-on-login true}
-    :as config}]
+  "Creates a handler for POST login requests.
+
+  Optional parameters:
+      :login-uri         - a login uri where users are redirected on authentication error
+      :form-reader       - a function that given :form-params returns a pair of username and password
+      :credentials-fn    - a function that given username and password returns the identity associated with them
+      :redirect-on-login - a flag that enables redirection to :return uri, default is true"
+  [{:keys [credentials-fn form-reader login-uri redirect-on-login]
+    :or   {credentials-fn    (constantly nil)
+           form-reader       default-form-reader
+           login-uri         "/login"
+           redirect-on-login true}
+    :as   config}]
   (fn [{:keys [form-params query-params] :as request}]
-    (let [return-url (when redirect-on-login (or (:return form-params)
-                                                 (:return query-params)))]
-      (if-let [identity (form-based-identity form-params credential-fn)]
+    (let [return-url          (when redirect-on-login (or (:return form-params)
+                                                          (:return query-params)))
+          [username password] (form-reader form-params)]
+      (if-let [identity (and username password (credentials-fn username password))]
           (-> (response/redirect-after-post (if (and return-url
                                                    (url/relative? return-url))
                                                       return-url "/"))
@@ -32,7 +35,8 @@
                                (str login-uri "?error=true"))]
             (response/redirect-after-post redirect-url))))))
 
-(defhandler default-logout-handler
-  [requst]
+(defn default-logout-handler
+  "Returns a Ring response that redirects to / and unsets identity associated with corrent session."
+  [request]
   (-> (response/redirect-after-post "/")
       (logout)))
