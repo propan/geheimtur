@@ -13,10 +13,10 @@
   Optional parameters:
       :login-uri         - a login uri where users are redirected on authentication error
       :form-reader       - a function that given :form-params returns a pair of username and password
-      :credentials-fn    - a function that given username and password returns the identity associated with them
+      :credential-fn     - a function that given username and password returns the identity associated with them
       :redirect-on-login - a flag that enables redirection to :return uri, default is true"
-  [{:keys [credentials-fn form-reader login-uri redirect-on-login]
-    :or   {credentials-fn    (constantly nil)
+  [{:keys [credential-fn form-reader login-uri redirect-on-login]
+    :or   {credential-fn    (constantly nil)
            form-reader       default-form-reader
            login-uri         "/login"
            redirect-on-login true}
@@ -25,7 +25,7 @@
     (let [return-url          (when redirect-on-login (or (:return form-params)
                                                           (:return query-params)))
           [username password] (form-reader form-params)]
-      (if-let [identity (and username password (credentials-fn username password))]
+      (if-let [identity (and username password (credential-fn username password))]
           (-> (response/redirect-after-post (if (and return-url
                                                    (url/relative? return-url))
                                                       return-url "/"))

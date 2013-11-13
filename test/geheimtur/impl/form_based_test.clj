@@ -17,7 +17,7 @@
         (is (= 303 (:status response)))
         (is (= "/login?error=true&return=/some-url" (get-in response [:headers "Location"]))))))
 
-  (let [handler (default-login-handler {:credentials-fn (fn [user password]
+  (let [handler (default-login-handler {:credential-fn (fn [user password]
                                                             (when (and (= user "user")
                                                                        (= password "password"))
                                                               :success))})]
