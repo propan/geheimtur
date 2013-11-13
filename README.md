@@ -25,6 +25,8 @@ Include the library in your leiningen project dependencies:
 
 You can find the sources of a demo application in [geheimtur-demo] [3] repository.
 
+**The examples below does not duplicate information available as docstrings, if want to know all available options - check the docs in the code.**
+
 ### Securing a page
 
 When you need to limit access to a specific page or a sub-tree of pages, you just add `guard` interceptor to the desired location.
@@ -42,6 +44,90 @@ this is an illustration of `guard` usage and not a completely functional example
 (defroutes routes
   [[["/" {:get views/home-page}
      ["/admin" {:get views/admin} ^:interceptors [(guard :roles #{:admin})]]]]])
+```
+
+### Enabling a flow
+
+When a unauthenticated user or a user with missing access rigths reaches a page secured with `guard`, the `guard` will throw an exception that
+can be handled either by `http-basic` or `interactive` interceptor that determines which flow is going to be triggered.
+
+#### Http-Basic
+
+You can enable http-basic authentication by putting `http-basic` interceptor before any of your guards.  It takes the following parameters:
+
+- `realm` - a string that will be shown to a user when s/he is prompted to enter credentials
+- `credential-fn` - a function that given username and password returns a corresponding identity
+
+```clojure
+(defroutes routes
+  [[["/" {:get views/home-page ^:interceptors [(http-basic "Secure App" get-identity-from-db)]}
+     ["/admin" {:get views/admin} ^:interceptors [(guard :roles #{:admin})]]]]])
+```
+
+#### Form-based
+
+You can use `interactive` interceptor to redirect users to the login page when they are requested to be authenticated by a guard.
+At this moment, it accepts only one configuration option - `:login-uri`, by default users are redirected to `/login` page.
+
+```clojure
+(defroutes routes
+  [[["/" {:get views/home-page ^:interceptors [(interactive {:login-uri "/users/login"})]
+     ["/admin" {:get views/admin} ^:interceptors [(guard :roles #{:admin})]]]]])
+```
+
+After doing so, you just need to add handlers that render login page and authenticate users. Geheimtur comes with a default :POST handler
+that can be user to authenticate users when you don't want to implement your own. `form-based` interceptor requires sessions to be enabled.
+
+```clojure
+(def login-post-handler
+  (default-login-handler {:credential-fn credentials}))
+
+(defroutes routes
+  [[["/" {:get views/home-page}
+     ^:interceptors [(body-params/body-params)
+                     bootstrap/html-body
+                     session-interceptor]
+     ["/login" {:get views/login-page :post login-post-handler}]
+     ["/logout" {:get default-logout-handler}]
+     ["/interactive" {:get views/interactive-index} ^:interceptors [access-forbidden-interceptor (interactive {})]
+      ["/restricted" {:get views/interactive-restricted} ^:interceptors [(guard :silent? false)]]]]]])
+```
+
+A complete example can be found [here] [3].
+
+#### OAuth 2.0
+
+You can use the same `interactive` inteceptor to redirect users to a page where they choose supported identity providers.
+Geheimtur provides handlers for users redirection and callbacks out of the box, all you need to do - is to configure 
+providers available for your users.
+
+```clojure
+(def providers
+  {:github {:auth-url           "https://github.com/login/oauth/authorize"
+            :client-id          (or (System/getenv "github.client_id") "client-id")
+            :client-secret      (or (System/getenv "github.client_secret") "client-secret")
+            :scope              "user:email"
+            :token-url          "https://github.com/login/oauth/access_token"
+            :user-info-url      "https://api.github.com/user"
+            :user-info-parse-fn #(parse-string % true)}})
+
+(def oath-handler
+  (authenticate-handler providers))
+
+(def oath-callback-handler
+  (callback-handler providers))
+
+(defroutes routes
+  [[["/" {:get views/home-page}
+     ^:interceptors [(body-params/body-params)
+                     bootstrap/html-body
+                     session-interceptor]
+     ["/login" {:get views/login-page :post login-post-handler}]
+     ["/logout" {:get default-logout-handler}]
+     ["/oauth.login" {:get oath-handler}]
+     ["/oauth.callback" {:get oath-callback-handler}]
+     ["/interactive" {:get views/interactive-index} ^:interceptors [access-forbidden-interceptor (interactive {})]
+      ["/restricted" {:get views/interactive-restricted} ^:interceptors [(guard :silent? false)]]]]]])
 ```
 
 ## License
