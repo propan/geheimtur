@@ -19,14 +19,14 @@
   (let [url "http://domain.com"]
     (are [result query] (= result (create-url url query))
          (str url "?")        {}
-         (str url "?a=b&c=d") {:a "b" :c "d"})))
+         (str url "?c=d&a=b") {:a "b" :c "d"})))
 
 (deftest authenticate-handler-test
   (testing "Causes 404 when a provider is not defined or provider parameter is not set"
     (let [handler (authenticate-handler {})]
       (is (nil? (handler {:query-params {}})))
       (is (nil? (handler {:query-params {:provider "github"}})))))
-  
+
   (testing "Successfuly redirects and stores state in the session"
     (let [handler        (authenticate-handler providers)
           response       (handler {:query-params {:provider "github" :return "/return"}})
