@@ -1,8 +1,8 @@
 (ns geheimtur.interceptor
-  (:require [io.pedestal.service.interceptor :as interceptor :refer [interceptor definterceptorfn]]
+  (:require [io.pedestal.interceptor :as interceptor :refer [interceptor definterceptorfn]]
             [geheimtur.util.auth :as auth :refer [authorized? authenticated? throw-forbidden]]
             [geheimtur.util.response :as response]
-            [io.pedestal.service.log :as log]
+            [io.pedestal.log :as log]
             [geheimtur.impl.interactive :refer [interactive-error-handler]]
             [geheimtur.impl.form-based :as form-based]
             [geheimtur.impl.http-basic :refer [http-basic-authenticate http-basic-error-handler]]))

@@ -3,7 +3,7 @@
             [clojure.walk :refer [keywordize-keys]]
             [geheimtur.util.response :as response]
             [geheimtur.util.auth :refer [authenticate]]
-            [io.pedestal.service.log :as log]
+            [io.pedestal.log :as log]
             [ring.util.codec :as ring-codec])
   (:import [java.math BigInteger]
            [java.security SecureRandom]))
