@@ -1,4 +1,4 @@
-# Geheimtür
+# Geheimtür [![Build Status](https://travis-ci.org/propan/geheimtur.png)](https://travis-ci.org/propan/geheimtur)
 
 a Clojure library that allows you to secure your Pedestal applications with minimum efforts.
 
@@ -18,7 +18,7 @@ requires some extra routes to be added, those route should be pluged into the Pe
 Include the library in your leiningen project dependencies:
 
 ```clojure
-[geheimtur "0.1.1"]
+[geheimtur "0.1.2"]
 ```
 
 ## Examples
