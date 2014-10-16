@@ -1,12 +1,12 @@
 (ns ^{:doc "Integration tests of request handling with the geheimtur interceptors."}
   geheimtur.request-handling-test
-  (:require [io.pedestal.service.http.route.definition :refer [defroutes]]
-            [io.pedestal.service.interceptor :refer [definterceptorfn defhandler interceptor]]
-            [io.pedestal.service.http :as service]
+  (:require [io.pedestal.http.route.definition :refer [defroutes]]
+            [io.pedestal.interceptor :refer [definterceptorfn defhandler interceptor]]
+            [io.pedestal.http :as service]
             [geheimtur.util.auth :refer [authenticate]]
             [geheimtur.interceptor :as interceptor :refer :all ])
   (:use [clojure.test]
-        [io.pedestal.service.test]))
+        [io.pedestal.test]))
 
 (defhandler request-handler
   "An interceptor that creates a valid ring response and places it in
