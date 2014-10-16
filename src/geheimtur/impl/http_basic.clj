@@ -1,5 +1,5 @@
 (ns geheimtur.impl.http-basic
-  (:require [io.pedestal.service.log :as log]
+  (:require [io.pedestal.log :as log]
             [geheimtur.util.auth :refer [authenticate]]
             [geheimtur.util.response :as response])
   (:import org.apache.commons.codec.binary.Base64))

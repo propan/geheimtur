@@ -19,7 +19,8 @@
   (let [url "http://domain.com"]
     (are [result query] (= result (create-url url query))
          (str url "?")        {}
-         (str url "?a=b&c=d") {:a "b" :c "d"})))
+         (str url "?a=b&c=d") (sorted-map :a "b" :c "d"))))
+
 
 (deftest authenticate-handler-test
   (testing "Causes 404 when a provider is not defined or provider parameter is not set"
