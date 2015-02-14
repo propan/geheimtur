@@ -13,8 +13,7 @@
     (gen-salt 8))
   ([size]
     (let [salt (byte-array size)]
-      (-> (SecureRandom/getInstance "SHA1PRNG")
-        (.nextBytes salt))
+      (.nextBytes (SecureRandom/getInstance "SHA1PRNG") salt)
       salt)))
 
 (defn pbkdf2-hash

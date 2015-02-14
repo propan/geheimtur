@@ -26,17 +26,17 @@
                                                           (:return query-params)))
           [username password] (form-reader form-params)]
       (if-let [identity (and username password (credential-fn username password))]
-          (-> (response/redirect-after-post (if (and return-url
-                                                   (url/relative? return-url))
-                                                      return-url "/"))
-              (authenticate identity))
-          (let [redirect-url (if return-url
-                               (str login-uri "?error=true&return=" return-url)
-                               (str login-uri "?error=true"))]
-            (response/redirect-after-post redirect-url))))))
+        (authenticate
+         (response/redirect-after-post (if (and return-url
+                                                (url/relative? return-url))
+                                         return-url "/"))
+         identity)
+        (let [redirect-url (if return-url
+                             (str login-uri "?error=true&return=" return-url)
+                             (str login-uri "?error=true"))]
+          (response/redirect-after-post redirect-url))))))
 
 (defn default-logout-handler
   "Returns a Ring response that redirects to / and unsets identity associated with corrent session."
   [request]
-  (-> (response/redirect-after-post "/")
-      (logout)))
+  (logout (response/redirect-after-post "/")))

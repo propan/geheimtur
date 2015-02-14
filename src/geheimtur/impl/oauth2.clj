@@ -121,7 +121,6 @@
         (if-let [identity (process-callback code p)]
           (if on-success-handler
             (on-success-handler (assoc identity :return return))
-            (-> (response/redirect return)
-                (authenticate identity)))
+            (authenticate (response/redirect return) identity))
           (response/redirect "/unauthorized"))
         (response/redirect "/unauthorized")))))
