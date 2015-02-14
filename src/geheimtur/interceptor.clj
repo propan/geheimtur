@@ -34,7 +34,7 @@
    :unauthorized-fn    - a handler of unauthorized error state"
   [& {:keys [roles unauthenticated-fn unauthorized-fn silent?] :or {silent? true}}]
   (let [unauthenticated-fn (or unauthenticated-fn (access-forbidden-handler silent?))
-        unauthorized-fn (or unauthorized-fn (access-forbidden-handler silent? :type :unauthorized))]
+        unauthorized-fn    (or unauthorized-fn (access-forbidden-handler silent? :type :unauthorized))]
     (interceptor :name ::guard
                  :enter (guard-with roles unauthenticated-fn unauthorized-fn))))
 
@@ -42,7 +42,7 @@
   [error-handler]
   (fn [context error]
     (let [error-data (ex-data error)
-          type (::auth/type error-data)]
+          type       (::auth/type error-data)]
       (if-not (nil? type)
         (if (true? (:silent? error-data))
           (dissoc context :response ) ;; that will cause 404 error
@@ -54,8 +54,7 @@
    and handles authentication/authorization errors."
   [realm credential-fn]
   (interceptor :name ::http-basic-auth
-               :enter (fn [{request :request
-                            :as context}]
+               :enter (fn [{request :request :as context}]
                         (if-not (authenticated? request)
                           (http-basic-authenticate context credential-fn)
                           context))
