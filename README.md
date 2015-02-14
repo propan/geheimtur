@@ -18,7 +18,7 @@ requires some extra routes to be added, those route should be pluged into the Pe
 Include the library in your leiningen project dependencies:
 
 ```clojure
-[geheimtur "0.1.2"]
+[geheimtur "0.1.3"]
 ```
 
 ## Examples
