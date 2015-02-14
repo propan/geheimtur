@@ -1,6 +1,6 @@
 (ns geheimtur.impl.http-basic
   (:require [io.pedestal.log :as log]
-            [geheimtur.util.auth :refer [authenticate]]
+            [geheimtur.util.auth :as auth :refer [authenticate]]
             [geheimtur.util.response :as response])
   (:import org.apache.commons.codec.binary.Base64))
 
@@ -19,14 +19,16 @@
 
 (defn http-basic-authenticate
   [context credential-fn]
-  (if-let [authorization (get-in context [:request :headers "authorization"])]
-    (if-let [identity (http-basic-identity authorization credential-fn)]
-      (update-in context [:request] authenticate identity)
-      (assoc context :response (response/forbidden)))
+  (if-let [identity (-> (get-in context [:request :headers "authorization"])
+                        (http-basic-identity credential-fn))]
+    (update-in context [:request] authenticate identity)
     context))
 
 (defn http-basic-error-handler
   "The default handler for HTTP Basic authentication/authorization errors."
   [realm]
   (fn [context error]
-    (assoc context :response (response/unauthorized realm (:reason error)))))
+    (assoc context :response
+           (if (= :unauthorized (::auth/type error))
+             (response/forbidden)
+             (response/unauthorized realm (:reason error))))))
