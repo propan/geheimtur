@@ -1,5 +1,5 @@
 (ns geheimtur.interceptor
-  (:require [io.pedestal.interceptor :as interceptor :refer [interceptor definterceptorfn]]
+  (:require [io.pedestal.interceptor :refer [interceptor]]
             [geheimtur.util.auth :as auth :refer [authorized? authenticated? throw-forbidden]]
             [geheimtur.util.response :as response]
             [io.pedestal.log :as log]
@@ -24,7 +24,7 @@
         context)
       (unauthenticated-fn context))))
 
-(definterceptorfn guard
+(defn guard
   "An interceptor that allows only authenticated users that have any of :roles to access unterlying pages.
 
    Accepts optional parameters:
@@ -35,8 +35,8 @@
   [& {:keys [roles unauthenticated-fn unauthorized-fn silent?] :or {silent? true}}]
   (let [unauthenticated-fn (or unauthenticated-fn (access-forbidden-handler silent?))
         unauthorized-fn    (or unauthorized-fn (access-forbidden-handler silent? :type :unauthorized))]
-    (interceptor :name ::guard
-                 :enter (guard-with roles unauthenticated-fn unauthorized-fn))))
+    (interceptor {:name  ::guard
+                  :enter (guard-with roles unauthenticated-fn unauthorized-fn)})))
 
 (defn- access-forbidden-catcher
   [error-handler]
@@ -49,21 +49,21 @@
           (error-handler context error-data))
         (throw error)))))
 
-(definterceptorfn http-basic
+(defn http-basic
   "An interceptor that provides HTTP Basic authentication for your application
    and handles authentication/authorization errors."
   [realm credential-fn]
-  (interceptor :name ::http-basic-auth
-               :enter (fn [{request :request :as context}]
-                        (if-not (authenticated? request)
-                          (http-basic-authenticate context credential-fn)
-                          context))
-               :error (access-forbidden-catcher (http-basic-error-handler realm))))
+  (interceptor {:name  ::http-basic-auth
+                :enter (fn [{request :request :as context}]
+                         (if-not (authenticated? request)
+                           (http-basic-authenticate context credential-fn)
+                           context))
+                :error (access-forbidden-catcher (http-basic-error-handler realm))}))
 
-(definterceptorfn interactive
+(defn interactive
   "An interceptor that provides interactive authentication flow for
    handling authentication/authorization errors in your application."
   [config]
   (let [config (merge {:login-uri "/login"} config)]
-    (interceptor :name ::interactive-auth
-                 :error (access-forbidden-catcher (interactive-error-handler config)))))
+    (interceptor {:name  ::interactive-auth
+                  :error (access-forbidden-catcher (interactive-error-handler config))})))

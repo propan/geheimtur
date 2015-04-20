@@ -1,7 +1,8 @@
 (ns ^{:doc "Integration tests of request handling with the geheimtur interceptors."}
   geheimtur.request-handling-test
   (:require [io.pedestal.http.route.definition :refer [defroutes]]
-            [io.pedestal.interceptor :refer [definterceptorfn defhandler interceptor]]
+            [io.pedestal.interceptor :refer [interceptor]]
+            [io.pedestal.interceptor.helpers :refer [defhandler]]
             [io.pedestal.http :as service]
             [geheimtur.util.auth :refer [authenticate]]
             [geheimtur.interceptor :as interceptor :refer :all ])
@@ -16,12 +17,12 @@
    :body "Request handled!"
    :headers {}})
 
-(definterceptorfn identity-injector
+(defn identity-injector
   "An intercepter that authenticates a request with the given identity."
   [identity]
-  (interceptor :name ::identity-injector
-               :enter (fn [context]
-                        (update-in context [:request] authenticate identity))))
+  (interceptor {:name  ::identity-injector
+                :enter (fn [context]
+                         (update-in context [:request] authenticate identity))}))
 
 (defroutes routes
   [[:request-handling "geheimtur.io"
