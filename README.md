@@ -11,7 +11,7 @@ application and do that the way I wanted, so I decided to implement something th
 Pedestal applications as easily (hopefully) as [friend] [2] does with Ring applications.
 
 Also, I didn't want to mess around with routing that is handled quite nicely by Pedestal itself, so if an authentication flow
-requires some extra routes to be added, those route should be pluged into the Pedestal routing system manually.
+requires some extra routes to be added, those route should be plugged into the Pedestal routing system manually.
 
 ## Usage
 
@@ -29,15 +29,15 @@ You can find the sources of a demo application in [geheimtur-demo] [3] repositor
 
 ### Securing a page
 
-When you need to limit access to a specific page or a sub-tree of pages, you just add `guard` interceptor to the desired location.
+When you need to limit access to a specific page or a sub-tree of pages, you just add the `guard` interceptor to the desired location.
 You can adjust the interceptor behaviour using the following optional parameters:
 
-- `:roles` - a set of roles that are allowed to access the page, if not defined users are required to be just authenticated
-- `:silent?` - a flag to effect unauthorized/unauthenticated behavious. If set to `true` (default), users will be getting 404 Not Found error page, when they don't have enougth access rights
-- `:unauthenticated-fn` - a handler of unauthenticated error state, it's a function that accepts a Pedestal context. The default implementation, throws an exception with `:unauthenticated` type
-- `:unauthorized-fn` - a handler of unauthorized error state, it's a function that accepts a Pedestal context. The default implementation, throws an exception with `:unauthorized` type
+- `:roles` - a set of roles that are allowed to access the page, if not defined users are required to just be authenticated
+- `:silent?` - a flag to effect unauthorized/unauthenticated behaviours. If set to `true` (default), users will be getting a 404 Not Found error page when they don't have access rights
+- `:unauthenticated-fn` - an unauthenticated error state handler. It's a function that accepts a Pedestal context. The default implementation, throws an exception with a type of `:unauthenticated`
+- `:unauthorized-fn` - an unauthorized error state handler. It's a function that accepts a Pedestal context. The default implementation, throws an exception with a type of `:unauthorized`
 
-In the example below, only administrators are allowed to access the pages under `/admin` path, the rest will be getting 404 responses (Note:
+In the example below, only administrators are allowed to access the pages under the `/admin` path, the rest will be getting a 404 responses (Note:
 this is an illustration of `guard` usage and not a completely functional example.)
 
 ```clojure
@@ -48,15 +48,15 @@ this is an illustration of `guard` usage and not a completely functional example
 
 ### Enabling a flow
 
-When a unauthenticated user or a user with missing access rigths reaches a page secured with `guard`, the `guard` will throw an exception that
-can be handled either by `http-basic` or `interactive` interceptor that determines which flow is going to be triggered.
+When an unauthenticated user or a user with missing access rights reaches a page secured with `guard`, the `guard` will throw an exception that
+can be handled either by the `http-basic` or `interactive` interceptor that determines which flow is going to be triggered.
 
 #### Http-Basic
 
-You can enable http-basic authentication by putting `http-basic` interceptor before any of your guards.  It takes the following parameters:
+You can enable http-basic authentication by putting the `http-basic` interceptor before any of your guards. It takes the following parameters:
 
 - `realm` - a string that will be shown to a user when s/he is prompted to enter credentials
-- `credential-fn` - a function that given username and password returns a corresponding identity
+- `credential-fn` - a function that, given a username and password, returns a corresponding identity
 
 ```clojure
 (defroutes routes
@@ -66,8 +66,8 @@ You can enable http-basic authentication by putting `http-basic` interceptor bef
 
 #### Form-based
 
-You can use `interactive` interceptor to redirect users to the login page when they are requested to be authenticated by a guard.
-At this moment, it accepts only one configuration option - `:login-uri`, by default users are redirected to `/login` page.
+You can use the `interactive` interceptor to redirect users to the login page when they are requested to be authenticated by a guard.
+At this moment, it accepts only one configuration option - `:login-uri`, by default users are redirected to the `/login` page.
 
 ```clojure
 (defroutes routes
@@ -75,8 +75,8 @@ At this moment, it accepts only one configuration option - `:login-uri`, by defa
      ["/admin" {:get views/admin} ^:interceptors [(guard :roles #{:admin})]]]]])
 ```
 
-After doing so, you just need to add handlers that render login page and authenticate users. Geheimtur comes with a default :POST handler
-that can be user to authenticate users when you don't want to implement your own. `form-based` interceptor requires sessions to be enabled.
+After doing so, you just need to add handlers that render the login page and authenticate users. Geheimtur comes with a default :POST handler
+that can be used to authenticate users when you don't want to implement your own. The `form-based` interceptor requires sessions to be enabled.
 
 ```clojure
 (def login-post-handler
@@ -98,8 +98,7 @@ A complete example can be found [here] [3].
 #### OAuth 2.0
 
 You can use the same `interactive` inteceptor to redirect users to a page where they choose supported identity providers.
-Geheimtur provides handlers for users redirection and callbacks out of the box, all you need to do - is to configure 
-providers available for your users.
+Geheimtur provides handlers for users redirection and callbacks out of the box, all you need to do is to configure providers available for your users.
 
 ```clojure
 (def providers
