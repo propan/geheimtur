@@ -57,11 +57,12 @@
     (testing "Successful case"
       (with-redefs-fn {#'clj-http.client/post (fn [url query]
                                                 (when (and (= url "https://github.com/login/oauth/access_token")
-                                                           (= query {:form-params {:code          code
-                                                                                   :client_id     "client-id"
-                                                                                   :client_secret "client-secret"
-                                                                                   :grant_type    "authorization_code"
-                                                                                   :redirect_uri  "/oauth.callback"}}))
+                                                           (= query {:form-params           {:code          code
+                                                                                             :client_id     "client-id"
+                                                                                             :client_secret "client-secret"
+                                                                                             :grant_type    "authorization_code"
+                                                                                             :redirect_uri  "/oauth.callback"}
+                                                                     :throw-entire-message? true}))
                                                   {:status 200
                                                    :body   "access_token=a72e16c7e42f292c6912e7710c838347ae178b4a&scope=user&token_type=bearer"}))}
         #(is (= {:token_type   "bearer"
@@ -79,7 +80,8 @@
     (testing "Successful case"
       (with-redefs-fn {#'clj-http.client/get (fn [url param]
                                                (when (and (= url "https://api.github.com/user")
-                                                        (= param {:oauth-token token}))
+                                                          (= param {:oauth-token           token
+                                                                    :throw-entire-message? true}))
                                                  {:status 200
                                                   :body "I'm your body!"}))}
         #(is (= "I'm your body!" (fetch-user-info url token)))))))
