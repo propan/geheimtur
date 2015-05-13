@@ -69,7 +69,8 @@
                 (assoc query :redirect_uri callback-uri)
                 query)]
     (try
-      (let [response (client/post token-url {:form-params query})]
+      (let [response (client/post token-url {:form-params           query
+                                             :throw-entire-message? true})]
         (when (client/success? response)
           (keywordize-keys (ring-codec/form-decode (:body response)))))
       (catch Exception ex
@@ -81,7 +82,8 @@
   [url token]
   "Fetches user's details using the given URL and OAuth access token."
   (try
-    (let [response (client/get url {:oauth-token token})]
+    (let [response (client/get url {:oauth-token           token
+                                    :throw-entire-message? true})]
       (when (client/success? response)
         (:body response)))
     (catch Exception ex
