@@ -30,13 +30,16 @@
                  :client-secret      \"your-client-secret\"
                  :scope              \"user:email\"
                  :token-url          \"https://github.com/login/oauth/access_token\"
+                 :token-parse-fn     (fn [resp] (parse-string (:body resp)))
                  :user-info-url      \"https://api.github.com/user\"
-                 :user-info-parse-fn #(parse-string % true)
+                 :user-info-parse-fn (fn [resp] (parse-string (:body resp)))
                  :on-success-handler on-github-success}})
 
   The following keys in provider's configuration are optional:
+      :token-parse-fn     - a function that accepts the token endpoint response and returns a map with the parsed
+                            OAuth2 token response. The successfuly parsed response must have at least :access_token key.
       :user-info-url      - if defined, will be used to get user's details after successful access token acquisition
-      :user-info-parse-fn - if definded, will be applied to the response body of user's details response
+      :user-info-parse-fn - if definded, will be applied to the response of user's details endpoint
       :on-success-handler - a function that accepts an obtained identity/access token map, that should return correct ring response.
                             It is called only if an identity/access token is resolved."
   [providers]
@@ -60,7 +63,7 @@
 
 (defn fetch-token
   "Fetches an OAuth access token using the given code and provider's configuration."
-  [code {:keys [token-url client-id client-secret callback-uri] :as provider}]
+  [code {:keys [token-url client-id client-secret callback-uri token-parse-fn] :as provider}]
   (let [query {:code          code
                :client_id     client-id
                :client_secret client-secret
@@ -70,9 +73,12 @@
                 query)]
     (try
       (let [response (client/post token-url {:form-params           query
-                                             :throw-entire-message? true})]
+                                             :throw-entire-message? true
+                                             :as                    (when (nil? token-parse-fn) :auto)})]
         (when (client/success? response)
-          (keywordize-keys (ring-codec/form-decode (:body response)))))
+          (if (nil? token-parse-fn)
+            (:body response)
+            (token-parse-fn response))))
       (catch Exception ex
         (log/warn :msg (str "Could not fetch OAuth access token from " token-url)
                   :exception ex)
@@ -95,15 +101,18 @@
   "Resolves user's identity based on provider's configuration.
 
    Accepts:
-       token    - an OAuth access token
+       token    - an OAuth access token response. Must contain at least :access_token.
        provider - a provider's configuration"
-  [{:keys [access_token] :as token}
+  [{:keys [access_token expires_in refresh_token] :as token}
    {:keys [user-info-url user-info-parse-fn] :or {user-info-parse-fn identity} :as provider}]
-  (let [result {:access-token access_token}]
-    (if user-info-url
-      (when-let [user-info (fetch-user-info user-info-url access_token)]
-        (assoc result :identity (user-info-parse-fn user-info)))
-      result)))
+  (when access_token
+    (let [result {:access-token  access_token
+                  :expires-in    expires_in
+                  :refresh-token refresh_token}]
+      (if user-info-url
+        (when-let [user-info (fetch-user-info user-info-url access_token)]
+          (assoc result :identity (user-info-parse-fn user-info)))
+        result))))
 
 (defn- process-callback
   [code provider]

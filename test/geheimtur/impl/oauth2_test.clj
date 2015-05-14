@@ -54,20 +54,41 @@
       (with-redefs-fn {#'clj-http.client/post (fn [url query] (throw (Exception. "Troubles!")))}
         #(is (nil? (fetch-token code provider)))))
 
-    (testing "Successful case"
-      (with-redefs-fn {#'clj-http.client/post (fn [url query]
-                                                (when (and (= url "https://github.com/login/oauth/access_token")
-                                                           (= query {:form-params           {:code          code
-                                                                                             :client_id     "client-id"
-                                                                                             :client_secret "client-secret"
-                                                                                             :grant_type    "authorization_code"
-                                                                                             :redirect_uri  "/oauth.callback"}
-                                                                     :throw-entire-message? true}))
-                                                  {:status 200
-                                                   :body   "access_token=a72e16c7e42f292c6912e7710c838347ae178b4a&scope=user&token_type=bearer"}))}
-        #(is (= {:token_type   "bearer"
-                 :scope        "user"
-                 :access_token "a72e16c7e42f292c6912e7710c838347ae178b4a"} (fetch-token code provider)))))))
+    (testing "Successful case with auto parsing"
+      (let [response-body {:token_type   "bearer"
+                           :scope        "user"
+                           :access_token "a72e16c7e42f292c6912e7710c838347ae178b4a"}]
+        (with-redefs-fn {#'clj-http.client/post (fn [url query]
+                                                  (when (and (= url "https://github.com/login/oauth/access_token")
+                                                             (= query {:form-params           {:code          code
+                                                                                               :client_id     "client-id"
+                                                                                               :client_secret "client-secret"
+                                                                                               :grant_type    "authorization_code"
+                                                                                               :redirect_uri  "/oauth.callback"}
+                                                                       :throw-entire-message? true
+                                                                       :as                    :auto}))
+                                                    {:status 200
+                                                     :body   response-body}))}
+          #(is (= response-body (fetch-token code provider))))))
+
+    (testing "Successful case with custom parse-token-fn"
+      (let [parsed-token {:access_token "a72e16c7e42f292c6912e7710c838347ae178b4a"}
+            provider     (assoc provider :token-parse-fn (fn [response]
+                                                           (when (=  (:body response)
+                                                                     "access_token=a72e16c7e42f292c6912e7710c838347ae178b4a&scope=user&token_type=bearer")
+                                                             parsed-token)))]
+        (with-redefs-fn {#'clj-http.client/post (fn [url query]
+                                                  (when (and (= url "https://github.com/login/oauth/access_token")
+                                                             (= query {:form-params           {:code          code
+                                                                                               :client_id     "client-id"
+                                                                                               :client_secret "client-secret"
+                                                                                               :grant_type    "authorization_code"
+                                                                                               :redirect_uri  "/oauth.callback"}
+                                                                       :throw-entire-message? true
+                                                                       :as                    nil}))
+                                                    {:status 200
+                                                     :body   "access_token=a72e16c7e42f292c6912e7710c838347ae178b4a&scope=user&token_type=bearer"}))}
+          #(is (= parsed-token (fetch-token code provider))))))))
 
 (deftest fetch-user-info-test
   (let [url   "https://api.github.com/user"
@@ -87,7 +108,9 @@
         #(is (= "I'm your body!" (fetch-user-info url token)))))))
 
 (deftest resolve-identity-test
-  (let [token    {:access_token "a72e16c7e42f292c6912e7710c838347ae178b4a"}
+  (let [token    {:access_token  "a72e16c7e42f292c6912e7710c838347ae178b4a"
+                  :expires_in    600
+                  :refresh_token "a72e16c7e42f292c6912e7710c838347ae178b4b"}
         provider (:github providers)]
 
     (testing "Ignores failed fetching"
@@ -95,15 +118,19 @@
         #(is (nil? (resolve-identity token provider)))))
 
     (testing "Does not do fetching if no URL is defined"
-      (is (= {:access-token "a72e16c7e42f292c6912e7710c838347ae178b4a"} (resolve-identity token {}))))
+      (is (= {:access-token "a72e16c7e42f292c6912e7710c838347ae178b4a"
+              :expires-in    600
+              :refresh-token "a72e16c7e42f292c6912e7710c838347ae178b4b"} (resolve-identity token {}))))
 
     (testing "Returns fetched identity"
       (with-redefs-fn {#'geheimtur.impl.oauth2/fetch-user-info (fn [url token]
                                                                  (when (and (= url "https://api.github.com/user")
                                                                             (= token "a72e16c7e42f292c6912e7710c838347ae178b4a"))
                                                                    :user-success))}
-        #(is (= {:identity :success
-                 :access-token "a72e16c7e42f292c6912e7710c838347ae178b4a"} (resolve-identity token provider)))))))
+        #(is (= {:identity      :success
+                 :access-token  "a72e16c7e42f292c6912e7710c838347ae178b4a"
+                 :expires-in    600
+                 :refresh-token "a72e16c7e42f292c6912e7710c838347ae178b4b"} (resolve-identity token provider)))))))
 
 (deftest callback-handler-test
   (let [handler (callback-handler providers)
