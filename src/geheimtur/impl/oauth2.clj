@@ -85,13 +85,20 @@
         nil))))
 
 (defn fetch-user-info
-  [url token]
-  "Fetches user's details using the given URL and OAuth access token."
+  [token url response-parse-fn]
+  "Fetches user's details using the given URL and an OAuth access token.
+
+   Accepts:
+       token             - an OAuth token to be used to fetch the user details
+       url               - a URL to fetch user details from
+       response-parse-fn - a function to be used to parse the response of the endpoint (optional)"
   (try
     (let [response (client/get url {:oauth-token           token
-                                    :throw-entire-message? true})]
-      (when (client/success? response)
-        (:body response)))
+                                    :throw-entire-message? true
+                                    :as                    (when (nil? response-parse-fn) :auto)})]
+      (if (nil? response-parse-fn)
+        (:body response)
+        (response-parse-fn response)))
     (catch Exception ex
       (log/warn :msg (str "Could not fetch user details from " url)
                 :exception ex)
@@ -104,14 +111,14 @@
        token    - an OAuth access token response. Must contain at least :access_token.
        provider - a provider's configuration"
   [{:keys [access_token expires_in refresh_token] :as token}
-   {:keys [user-info-url user-info-parse-fn] :or {user-info-parse-fn identity} :as provider}]
+   {:keys [user-info-url user-info-parse-fn]}]
   (when access_token
     (let [result {:access-token  access_token
                   :expires-in    expires_in
                   :refresh-token refresh_token}]
       (if user-info-url
-        (when-let [user-info (fetch-user-info user-info-url access_token)]
-          (assoc result :identity (user-info-parse-fn user-info)))
+        (when-let [user-info (fetch-user-info access_token user-info-url user-info-parse-fn)]
+          (assoc result :identity user-info))
         result))))
 
 (defn- process-callback

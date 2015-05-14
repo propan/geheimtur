@@ -96,16 +96,30 @@
 
     (testing "Handles any exception thrown while fetching"
       (with-redefs-fn {#'clj-http.client/get (fn [url param] (throw (Exception. "Troubles!")))}
-        #(is (nil? (fetch-user-info url token)))))
+        #(is (nil? (fetch-user-info token url nil)))))
 
-    (testing "Successful case"
+    (testing "Successful fetching using auto-parsing"
       (with-redefs-fn {#'clj-http.client/get (fn [url param]
                                                (when (and (= url "https://api.github.com/user")
                                                           (= param {:oauth-token           token
-                                                                    :throw-entire-message? true}))
+                                                                    :throw-entire-message? true
+                                                                    :as                    :auto}))
                                                  {:status 200
                                                   :body "I'm your body!"}))}
-        #(is (= "I'm your body!" (fetch-user-info url token)))))))
+        #(is (= "I'm your body!" (fetch-user-info token url nil)))))
+
+    (testing "Successful fetching using a custom response parser"
+      (let [identity {:name "Bob" :last-name "Belcher"}]
+        (with-redefs-fn {#'clj-http.client/get (fn [url param]
+                                                 (when (and (= url "https://api.github.com/user")
+                                                            (= param {:oauth-token           token
+                                                                      :throw-entire-message? true
+                                                                      :as                    nil}))
+                                                   {:status 200
+                                                    :body   "I'm your body!"}))}
+          #(is (= identity (fetch-user-info token url (fn [resp]
+                                                        (when (= "I'm your body!" (:body resp))
+                                                          identity))))))))))
 
 (deftest resolve-identity-test
   (let [token    {:access_token  "a72e16c7e42f292c6912e7710c838347ae178b4a"
@@ -114,7 +128,7 @@
         provider (:github providers)]
 
     (testing "Ignores failed fetching"
-      (with-redefs-fn {#'geheimtur.impl.oauth2/fetch-user-info (fn [url token] nil)}
+      (with-redefs-fn {#'geheimtur.impl.oauth2/fetch-user-info (fn [token url parse-fn] nil)}
         #(is (nil? (resolve-identity token provider)))))
 
     (testing "Does not do fetching if no URL is defined"
@@ -123,10 +137,11 @@
               :refresh-token "a72e16c7e42f292c6912e7710c838347ae178b4b"} (resolve-identity token {}))))
 
     (testing "Returns fetched identity"
-      (with-redefs-fn {#'geheimtur.impl.oauth2/fetch-user-info (fn [url token]
+      (with-redefs-fn {#'geheimtur.impl.oauth2/fetch-user-info (fn [token url parse-fn]
                                                                  (when (and (= url "https://api.github.com/user")
-                                                                            (= token "a72e16c7e42f292c6912e7710c838347ae178b4a"))
-                                                                   :user-success))}
+                                                                            (= token "a72e16c7e42f292c6912e7710c838347ae178b4a")
+                                                                            (not (nil? parse-fn)))
+                                                                   :success))}
         #(is (= {:identity      :success
                  :access-token  "a72e16c7e42f292c6912e7710c838347ae178b4a"
                  :expires-in    600
