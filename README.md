@@ -18,7 +18,7 @@ requires some extra routes to be added, those route should be plugged into the P
 Include the library in your leiningen project dependencies:
 
 ```clojure
-[geheimtur "0.1.4"]
+[geheimtur "0.1.5"]
 ```
 
 ## Examples
@@ -100,6 +100,8 @@ A complete example can be found [here] [3].
 You can use the same `interactive` inteceptor to redirect users to a page where they choose supported identity providers.
 Geheimtur provides handlers for users redirection and callbacks out of the box, all you need to do is to configure providers available for your users.
 
+**Please see to `authenticate-handler` documentation for the description of all possible provider options.**
+
 ```clojure
 (def providers
   {:github {:auth-url           "https://github.com/login/oauth/authorize"
@@ -108,7 +110,7 @@ Geheimtur provides handlers for users redirection and callbacks out of the box, 
             :scope              "user:email"
             :token-url          "https://github.com/login/oauth/access_token"
             :user-info-url      "https://api.github.com/user"
-            :user-info-parse-fn #(parse-string % true)}})
+            :user-info-parse-fn #(-> % :body (parse-string true))}})
 
 (def oath-handler
   (authenticate-handler providers))
@@ -128,6 +130,8 @@ Geheimtur provides handlers for users redirection and callbacks out of the box, 
      ["/interactive" {:get views/interactive-index} ^:interceptors [access-forbidden-interceptor (interactive {})]
       ["/restricted" {:get views/interactive-restricted} ^:interceptors [(guard :silent? false)]]]]]])
 ```
+
+A complete example can be found [here] [3].
 
 ## License
 
