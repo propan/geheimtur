@@ -100,7 +100,7 @@ A complete example can be found [here] [3].
 You can use the same `interactive` inteceptor to redirect users to a page where they choose supported identity providers.
 Geheimtur provides handlers for users redirection and callbacks out of the box, all you need to do is to configure providers available for your users.
 
-**Please see to `authenticate-handler` documentation for the description of all possible provider options.**
+**Please see `authenticate-handler` documentation for the description of all possible provider options.**
 
 ```clojure
 (def providers
