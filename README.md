@@ -18,7 +18,7 @@ requires some extra routes to be added, those route should be plugged into the P
 Include the library in your leiningen project dependencies:
 
 ```clojure
-[geheimtur "0.1.5"]
+[geheimtur "0.2.0"]
 ```
 
 ## Examples
@@ -135,7 +135,7 @@ A complete example can be found [here] [3].
 
 ## License
 
-Copyright © 2013 Pavel Prokopenko
+Copyright © 2015 Pavel Prokopenko
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
