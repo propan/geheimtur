@@ -33,7 +33,7 @@ When you need to limit access to a specific page or a sub-tree of pages, you jus
 You can adjust the interceptor behaviour using the following optional parameters:
 
 - `:roles` - a set of roles that are allowed to access the page, if not defined users are required to just be authenticated
-- `:silent?` - a flag to effect unauthorized/unauthenticated behaviours. If set to `true` (default), users will be getting a 404 Not Found error page when they don't have access rights
+- `:silent?` - a flag to affect unauthorized/unauthenticated behaviours. If set to `true` (default), users will be getting a 404 Not Found error page when they don't have access rights
 - `:unauthenticated-fn` - an unauthenticated error state handler. It's a function that accepts a Pedestal context. The default implementation, throws an exception with a type of `:unauthenticated`
 - `:unauthorized-fn` - an unauthorized error state handler. It's a function that accepts a Pedestal context. The default implementation, throws an exception with a type of `:unauthorized`
 
