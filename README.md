@@ -112,10 +112,10 @@ Geheimtur provides handlers for users redirection and callbacks out of the box, 
             :user-info-url      "https://api.github.com/user"
             :user-info-parse-fn #(-> % :body (parse-string true))}})
 
-(def oath-handler
+(def oauth-handler
   (authenticate-handler providers))
 
-(def oath-callback-handler
+(def oauth-callback-handler
   (callback-handler providers))
 
 (defroutes routes
@@ -125,8 +125,8 @@ Geheimtur provides handlers for users redirection and callbacks out of the box, 
                      session-interceptor]
      ["/login" {:get views/login-page :post login-post-handler}]
      ["/logout" {:get default-logout-handler}]
-     ["/oauth.login" {:get oath-handler}]
-     ["/oauth.callback" {:get oath-callback-handler}]
+     ["/oauth.login" {:get oauth-handler}]
+     ["/oauth.callback" {:get oauth-callback-handler}]
      ["/interactive" {:get views/interactive-index} ^:interceptors [access-forbidden-interceptor (interactive {})]
       ["/restricted" {:get views/interactive-restricted} ^:interceptors [(guard :silent? false)]]]]]])
 ```
