@@ -24,15 +24,15 @@
 
 (deftest authenticate-handler-test
   (testing "Causes 404 when a provider is not defined or provider parameter is not set"
-    (let [handler (authenticate-handler {})]
-      (is (nil? (handler {:query-params {}})))
-      (is (nil? (handler {:query-params {:provider "github"}})))))
+    (let [{handler :enter} (authenticate-handler {})]
+      (is (nil? (:response (handler {:request {:query-params {}}}))))
+      (is (nil? (:response (handler {:request {:query-params {:provider "github"}}}))))))
   
   (testing "Successfuly redirects and stores state in the session"
-    (let [handler        (authenticate-handler providers)
-          response       (handler {:query-params {:provider "github" :return "/return"}})
-          session-status (get-in response [:session ::geheimtur.impl.oauth2/callback-state])
-          location       (get-in response [:headers "Location"])]
+    (let [{handler :enter} (authenticate-handler providers)
+          {response :response}         (handler {:request {:query-params {:provider "github" :return "/return"}}})
+          session-status   (get-in response [:session ::geheimtur.impl.oauth2/callback-state])
+          location         (get-in response [:headers "Location"])]
       (is (not (nil? response)))
       (is (= 302 (:status response)))
       (is (not (nil? session-status)))
@@ -58,25 +58,28 @@
       (let [response-body {:token_type   "bearer"
                            :scope        "user"
                            :access_token "a72e16c7e42f292c6912e7710c838347ae178b4a"}]
-        (with-redefs-fn {#'clj-http.client/post (fn [url query]
-                                                  (when (and (= url "https://github.com/login/oauth/access_token")
-                                                             (= query {:form-params           {:code          code
-                                                                                               :client_id     "client-id"
-                                                                                               :client_secret "client-secret"
-                                                                                               :grant_type    "authorization_code"
-                                                                                               :redirect_uri  "/oauth.callback"}
-                                                                       :throw-entire-message? true
-                                                                       :as                    :auto}))
-                                                    {:status 200
-                                                     :body   response-body}))}
+        (with-redefs-fn
+          {#'clj-http.client/post
+           (fn [url query]
+             (when (and (= url "https://github.com/login/oauth/access_token")
+                        (= query {:form-params           {:code          code
+                                                          :client_id     "client-id"
+                                                          :client_secret "client-secret"
+                                                          :grant_type    "authorization_code"
+                                                          :redirect_uri  "/oauth.callback"}
+                                  :throw-entire-message? true
+                                  :as                    :auto}))
+               {:status 200
+                :body   response-body}))}
           #(is (= response-body (fetch-token code provider))))))
 
     (testing "Successful case with custom parse-token-fn"
       (let [parsed-token {:access_token "a72e16c7e42f292c6912e7710c838347ae178b4a"}
-            provider     (assoc provider :token-parse-fn (fn [response]
-                                                           (when (=  (:body response)
-                                                                     "access_token=a72e16c7e42f292c6912e7710c838347ae178b4a&scope=user&token_type=bearer")
-                                                             parsed-token)))]
+            provider     (assoc provider :token-parse-fn
+                                (fn [response]
+                                  (when (= (:body response)
+                                           "access_token=a72e16c7e42f292c6912e7710c838347ae178b4a&scope=user&token_type=bearer")
+                                    parsed-token)))]
         (with-redefs-fn {#'clj-http.client/post (fn [url query]
                                                   (when (and (= url "https://github.com/login/oauth/access_token")
                                                              (= query {:form-params           {:code          code
@@ -148,18 +151,19 @@
                  :refresh-token "a72e16c7e42f292c6912e7710c838347ae178b4b"} (resolve-identity token provider)))))))
 
 (deftest callback-handler-test
-  (let [handler (callback-handler providers)
-        request {:query-params {:state "123"
-                                :code  "456"}
-                 :session {::geheimtur.impl.oauth2/callback-state {:return   "/return"
-                                                                   :token    "123"
-                                                                   :provider "github"}}}]
+  (let [{handler :enter} (callback-handler providers)
+        request {:request {:query-params {:state "123"
+                                          :code  "456"}
+                           :session {::geheimtur.impl.oauth2/callback-state {:return   "/return"
+                                                                             :token    "123"
+                                                                             :provider "github"}}}}]
     (testing "Redirects on authorization error"
-      (let [response (handler {})]
+      (let [{response :response} (handler {:request {}})]
         (is (= 302 (:status response)))
         (is (= "/unauthorized" (get-in response [:headers "Location"]))))
 
-      (let [response (handler (assoc-in request [:session ::geheimtur.impl.oauth2/callback-state :token] "123456"))]
+      (let [{response :response}
+            (handler (assoc-in request [:session ::geheimtur.impl.oauth2/callback-state :token] "123456"))]
         (is (= 302 (:status response)))
         (is (= "/unauthorized" (get-in response [:headers "Location"])))))
 
@@ -168,12 +172,14 @@
                                                                   (when (and (= code "456")
                                                                              (= provider (:github providers)))
                                                                     :authenticated-user))}
-        #(let [response (handler request)]
-          (is (= 302 (:status response)))
-          (is (= "/return" (get-in response [:headers "Location"])))
-          (is (= {::geheimtur.util.auth/identity :authenticated-user} (:session response))))))
+        #(let [{response :response} (handler request)]
+           (is (= 302 (:status response)))
+           (is (= "/return" (get-in response [:headers "Location"])))
+           (is (= {::geheimtur.util.auth/identity :authenticated-user} (:session response))))))
 
     (testing "Success with :on-success-handler"
-      (let [handler (callback-handler (assoc-in providers [:github :on-success-handler] (constantly :success)))]
-        (with-redefs-fn {#'geheimtur.impl.oauth2/process-callback (fn [code provider] {:access-token "token-token"})}
-          #(is (= :success (handler request))))))))
+      (let [{handler :enter}
+            (callback-handler (assoc-in providers [:github :on-success-handler] (constantly :success)))]
+        (with-redefs-fn {#'geheimtur.impl.oauth2/process-callback
+                         (fn [code provider] {:access-token "token-token"})}
+          #(is (= :success (:response (handler request)))))))))
