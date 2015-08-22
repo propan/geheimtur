@@ -1,4 +1,4 @@
-(defproject geheimtur "0.2.1"
+(defproject geheimtur "0.2.2-SNAPSHOT"
   :description "a secret door to your Pedestal application"
   :url "http://github.com/propan/geheimtur"
   :license {:name "Eclipse Public License"
@@ -15,7 +15,7 @@
                  ;; integration tests
                  [javax.servlet/javax.servlet-api "3.1.0" :scope "test"]
                  [org.slf4j/slf4j-nop "1.7.12" :scope "test"]]
-  :deploy-repositories [["releases" :clojars]]
+  :deploy-repositories [["releases" :clojars {:creds :gpg}]]
   :profiles {:dev {:dependencies [[org.clojure/clojure "1.7.0"]]}
              :1.6 {:dependencies [[org.clojure/clojure "1.6.0"]]}}
   :aliases {"all" ["with-profile" "dev,1.6:dev"]})
