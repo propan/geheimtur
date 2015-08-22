@@ -18,14 +18,14 @@ requires some extra routes to be added, those route should be plugged into the P
 Include the library in your leiningen project dependencies:
 
 ```clojure
-[geheimtur "0.2.0"]
+[geheimtur "0.2.1"]
 ```
 
 ## Examples
 
 You can find the sources of a demo application in [geheimtur-demo] [3] repository.
 
-**The examples below does not duplicate information available as docstrings, if want to know all available options - check the docs in the code.**
+**The examples below do not duplicate information available as docstrings, if you want to know all available options - check the docs in the code.**
 
 ### Securing a page
 
@@ -79,15 +79,12 @@ After doing so, you just need to add handlers that render the login page and aut
 that can be used to authenticate users when you don't want to implement your own. The `form-based` interceptor requires sessions to be enabled.
 
 ```clojure
-(def login-post-handler
-  (default-login-handler {:credential-fn credentials}))
-
 (defroutes routes
   [[["/" {:get views/home-page}
      ^:interceptors [(body-params/body-params)
                      bootstrap/html-body
                      session-interceptor]
-     ["/login" {:get views/login-page :post login-post-handler}]
+     ["/login" {:get views/login-page :post (default-login-handler {:credential-fn credentials})}]
      ["/logout" {:get default-logout-handler}]
      ["/interactive" {:get views/interactive-index} ^:interceptors [access-forbidden-interceptor (interactive {})]
       ["/restricted" {:get views/interactive-restricted} ^:interceptors [(guard :silent? false)]]]]]])
@@ -112,12 +109,6 @@ Geheimtur provides handlers for users redirection and callbacks out of the box, 
             :user-info-url      "https://api.github.com/user"
             :user-info-parse-fn #(-> % :body (parse-string true))}})
 
-(def oauth-handler
-  (authenticate-handler providers))
-
-(def oauth-callback-handler
-  (callback-handler providers))
-
 (defroutes routes
   [[["/" {:get views/home-page}
      ^:interceptors [(body-params/body-params)
@@ -125,8 +116,8 @@ Geheimtur provides handlers for users redirection and callbacks out of the box, 
                      session-interceptor]
      ["/login" {:get views/login-page :post login-post-handler}]
      ["/logout" {:get default-logout-handler}]
-     ["/oauth.login" {:get oauth-handler}]
-     ["/oauth.callback" {:get oauth-callback-handler}]
+     ["/oauth.login" {:get (authenticate-handler providers)}]
+     ["/oauth.callback" {:get (callback-handler providers)}]
      ["/interactive" {:get views/interactive-index} ^:interceptors [access-forbidden-interceptor (interactive {})]
       ["/restricted" {:get views/interactive-restricted} ^:interceptors [(guard :silent? false)]]]]]])
 ```
