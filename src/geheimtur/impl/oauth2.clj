@@ -133,7 +133,7 @@
 (defn callback-handler
   "Creates an OAuth call-back handler based on a map of OAuth providers.
 
-  If authentication flow fails for any reason, the user will be redirected to /unauthorised url."
+  If authentication flow fails for any reason, the user will be redirected to /unauthorized url."
   [providers]
   (h/handler
    ::callback-handler
