@@ -18,8 +18,8 @@
 (deftest create-url-test
   (let [url "http://domain.com"]
     (are [result query] (= result (create-url url query))
-         (str url "?")        {}
-         (str url "?a=b&c=d") (sorted-map :a "b" :c "d"))))
+      (str url "?")        {}
+      (str url "?a=b&c=d") (sorted-map :a "b" :c "d"))))
 
 
 (deftest authenticate-handler-test
@@ -179,7 +179,9 @@
 
     (testing "Success with :on-success-handler"
       (let [{handler :enter}
-            (callback-handler (assoc-in providers [:github :on-success-handler] (constantly :success)))]
+            (callback-handler (assoc-in providers [:github :on-success-handler] (fn [{:keys [access-token]}]
+                                                                                  (when (= access-token "token-token")
+                                                                                    :success))))]
         (with-redefs-fn {#'geheimtur.impl.oauth2/process-callback
                          (fn [code provider] {:access-token "token-token"})}
           #(is (= :success (:response (handler request)))))))))
