@@ -17,8 +17,9 @@
 
   (let [{handler :enter}
         (default-login-handler
-          {:credential-fn (fn [user password]
-                            (and (= user "user")
+          {:credential-fn (fn [context {:keys [username password]}]
+                            (and (contains? context :request)
+                                 (= username "user")
                                  (= password "password")
                                  :success))})]
     (testing "Redirects on success to return url"
@@ -36,7 +37,7 @@
         (is (= "/" (get-in response [:headers "Location"])))))))
 
 (deftest default-logout-handler-test
-  (let [{handler :enter} default-logout-handler
+  (let [{handler :enter}     default-logout-handler
         {response :response} (handler {:request {}})]
     (is (= 303 (:status response)))
     (is (= "/" (get-in response [:headers "Location"])))
