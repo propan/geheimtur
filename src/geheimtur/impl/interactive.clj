@@ -17,9 +17,9 @@
 (defn interactive-error-handler
   "Redirects user to the login page and sets `return` parameter of the redirect URL."
   [{:keys [unauthorized-handler unauthenticated-handler]
-    :or {unauthorized-handler default-unauthorized-handler
-         unauthenticated-handler default-unauthenticated-handler}
-    :as config}]
+    :or   {unauthorized-handler default-unauthorized-handler
+           unauthenticated-handler default-unauthenticated-handler}
+    :as   config}]
   (fn [context error]
     (let [type (::auth/type error)]
       (if (= type :unauthorized)

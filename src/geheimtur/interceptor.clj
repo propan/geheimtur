@@ -4,12 +4,11 @@
             [geheimtur.util.response :as response]
             [io.pedestal.log :as log]
             [geheimtur.impl.interactive :refer [interactive-error-handler]]
-            [geheimtur.impl.form-based :as form-based]
             [geheimtur.impl.http-basic :refer [http-basic-authenticate http-basic-error-handler]]))
 
 (defn access-forbidden-handler
   [silent? & {:keys [type reason reason-fn]
-              :or {type :unauthenticated reason "You are not allowed to access to this resource"}}]
+              :or   {type :unauthenticated reason "You are not allowed to access to this resource"}}]
   (let [reason-fn (or reason-fn (constantly reason))]
     (fn [context]
       (throw-forbidden {:silent? silent? ::auth/type type :reason (reason-fn type context)}))))
