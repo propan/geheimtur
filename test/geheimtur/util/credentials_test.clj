@@ -18,22 +18,21 @@
     false (bcrypt-hash "wrong-password")
     false (bcrypt-hash "wrong-password" :log-rounds 5)))
 
-(def users {"dale.cooper" {:name "Dale" :last-name "Cooper" :password (bcrypt-hash "password")}
+(def users {"dale.cooper"  {:name "Dale" :last-name "Cooper" :password (bcrypt-hash "password")}
             "jack.isidore" {:name "Jack" :last-name "Isidore" :pwd (pbkdf2-hash "password")}})
 
 (deftest default-credentials-fn
   (let [credentials-fn (create-credentials-fn users)]
-    (are [res user password] (= res (:last-name (credentials-fn user password)))
+    (are [res user password] (= res (:last-name (credentials-fn {} {:username user :password password})))
       "Cooper" "dale.cooper" "password"
       nil "dale.cooper" "wrong-password"
       nil "dale" "password"
       nil "jack.isidore" "password")))
 
 (deftest pbkdf2-credentials-fn
-  (let [credentials-fn (create-credentials-fn users
-                         :hash-verify-fn pbkdf2-verify
-                         :password-key :pwd)]
-    (are [res user password] (= res (:last-name (credentials-fn user password)))
+  (let [credentials-fn (create-credentials-fn
+                        users :hash-verify-fn pbkdf2-verify :password-key :pwd)]
+    (are [res user password] (= res (:last-name (credentials-fn {} {:username user :password password})))
       "Isidore" "jack.isidore" "password"
       nil "jack.isidore" "wrong-password"
       nil "jack" "password"

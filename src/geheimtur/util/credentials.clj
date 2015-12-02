@@ -62,11 +62,11 @@
 
   :hash-verify-fn - a hash verification function. Defaults to `bcrypt-verify`."
   [identity-fn & {:keys [password-key hash-verify-fn]
-                  :or {password-key :password
-                       hash-verify-fn bcrypt-verify}}]
-  (fn [username password]
+                  :or   {password-key   :password
+                         hash-verify-fn bcrypt-verify}}]
+  (fn [_ {:keys [username password]}]
     (let [identity (identity-fn username)
           pwd-hash (get identity password-key)]
       (and pwd-hash
-        (when (hash-verify-fn password pwd-hash)
-          (dissoc identity password-key))))))
+           (when (hash-verify-fn password pwd-hash)
+             (dissoc identity password-key))))))

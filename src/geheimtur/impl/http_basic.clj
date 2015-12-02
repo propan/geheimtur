@@ -5,22 +5,23 @@
   (:import org.apache.commons.codec.binary.Base64))
 
 (defn http-basic-identity
-  [authorization credential-fn]
-  (let [[[_ username password]] (try (-> (re-matches #"\s*Basic\s+(.+)" authorization)
-                                       ^String second
-                                       (.getBytes "UTF-8")
-                                       Base64/decodeBase64
-                                       (String. "UTF-8")
-                                       (#(re-seq #"([^:]*):(.*)" %)))
-                                  (catch Exception e
-                                    (log/info :msg (str "Invalid Authorization header for HTTP Basic auth: "
-                                                     authorization))))]
-    (and username password (credential-fn username password))))
+  [context credential-fn]
+  (when-let [authorization (get-in context [:request :headers "authorization"])]
+    (let [[[_ username password]] (try (-> (re-matches #"\s*Basic\s+(.+)" authorization)
+                                           ^String second
+                                           (.getBytes "UTF-8")
+                                           Base64/decodeBase64
+                                           (String. "UTF-8")
+                                           (#(re-seq #"([^:]*):(.*)" %)))
+                                       (catch Exception e
+                                         (log/info :msg (str "Invalid Authorization header for HTTP Basic auth: "
+                                                             authorization))))]
+      (and username password (credential-fn context {:username username
+                                                     :password password})))))
 
 (defn http-basic-authenticate
   [context credential-fn]
-  (if-let [identity (-> (get-in context [:request :headers "authorization"])
-                        (http-basic-identity credential-fn))]
+  (if-let [identity (http-basic-identity context credential-fn)]
     (update-in context [:request] authenticate identity)
     context))
 

@@ -8,7 +8,7 @@
   {:username "Bobby Briggs" :roles #{:user}})
 
 (defn validate-credentials
-  [username password]
+  [_ {:keys [username password]}]
   (when (and (= username "user")
              (= password "password"))
     user-identity))
@@ -32,13 +32,16 @@
 
 (deftest http-basic-identity-test
   (testing "Does not explode with nil"
-    (is (= nil (http-basic-identity nil validate-credentials))))
+    (is (= nil (http-basic-identity nil validate-credentials)))
+    (is (= nil (http-basic-identity {:request {:headers {}}} validate-credentials))))
 
   (testing "Does not explode with malformed header"
-    (is (= nil (http-basic-identity "Basic dXNl" validate-credentials))))
+    (let [context {:request {:headers {"authorization" "Basic dXNl"}}}]
+      (is (= nil (http-basic-identity context validate-credentials)))))
   
   (testing "Resolves identity with correct credentials"
-    (is (= {:roles #{:user}, :username "Bobby Briggs"} (http-basic-identity "Basic dXNlcjpwYXNzd29yZA==" validate-credentials)))))
+    (let [context {:request {:headers {"authorization" "Basic dXNlcjpwYXNzd29yZA=="}}}]
+      (is (= {:roles #{:user}, :username "Bobby Briggs"} (http-basic-identity context validate-credentials))))))
 
 (deftest http-basic-authenticate-test
   (let [context {:original true}]
