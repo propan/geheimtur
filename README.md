@@ -18,7 +18,7 @@ requires some extra routes to be added, those route should be plugged into the P
 Include the library in your leiningen project dependencies:
 
 ```clojure
-[geheimtur "0.2.1"]
+[geheimtur "0.3.0"]
 ```
 
 ## Examples
@@ -56,7 +56,7 @@ can be handled either by the `http-basic` or `interactive` interceptor that dete
 You can enable http-basic authentication by putting the `http-basic` interceptor before any of your guards. It takes the following parameters:
 
 - `realm` - a string that will be shown to a user when s/he is prompted to enter credentials
-- `credential-fn` - a function that, given a username and password, returns a corresponding identity
+- `credential-fn` - a function that, given a request context and a map with username and password, returns a corresponding identity
 
 ```clojure
 (defroutes routes
