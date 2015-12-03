@@ -152,11 +152,10 @@
 
 (deftest callback-handler-test
   (let [{handler :enter} (callback-handler providers)
-        request {:request {:query-params {:state "123"
-                                          :code  "456"}
-                           :session {::geheimtur.impl.oauth2/callback-state {:return   "/return"
-                                                                             :token    "123"
-                                                                             :provider "github"}}}}]
+        request          {:request {:query-params {:state "123" :code  "456"}
+                                    :session      {::geheimtur.impl.oauth2/callback-state {:return   "/return"
+                                                                                           :token    "123"
+                                                                                           :provider "github"}}}}]
     (testing "Redirects on authorization error"
       (let [{response :response} (handler {:request {}})]
         (is (= 302 (:status response)))
@@ -179,8 +178,10 @@
 
     (testing "Success with :on-success-handler"
       (let [{handler :enter}
-            (callback-handler (assoc-in providers [:github :on-success-handler] (fn [{:keys [access-token]}]
-                                                                                  (when (= access-token "token-token")
+            (callback-handler (assoc-in providers [:github :on-success-handler] (fn [context {:keys [access-token]}]
+                                                                                  (when (and
+                                                                                         (contains? context :request)
+                                                                                         (= access-token "token-token"))
                                                                                     :success))))]
         (with-redefs-fn {#'geheimtur.impl.oauth2/process-callback
                          (fn [code provider] {:access-token "token-token"})}

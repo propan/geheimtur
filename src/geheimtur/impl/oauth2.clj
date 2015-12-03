@@ -41,7 +41,7 @@
                             OAuth2 token response. The successfuly parsed response must have at least :access_token key.
       :user-info-url      - if defined, will be used to get user's details after successful access token acquisition
       :user-info-parse-fn - if definded, will be applied to the response of user's details endpoint
-      :on-success-handler - a function that accepts an obtained identity/access token map, that should return correct ring response.
+      :on-success-handler - a function that accepts a request context and an obtained identity/access token map and returns a correct ring response.
                             It is called only if an identity/access token is resolved."
   [providers]
   (h/handler
@@ -135,16 +135,18 @@
 
   If authentication flow fails for any reason, the user will be redirected to /unauthorized url."
   [providers]
-  (h/handler
+  (h/before
    ::callback-handler
-   (fn [{:keys [query-params session] :as request}]
-     (let [{:keys [state code]}               query-params
+   (fn [{request :request :as context}]
+     (let [{:keys [query-params session]}     request
+           {:keys [state code]}               query-params
            {:keys [return token provider]}    (::callback-state session)
            {:keys [on-success-handler] :as p} (get providers (keyword provider))]
-       (if (and state code return token provider (= state token) p)
-         (if-let [identity (process-callback code p)]
-           (if on-success-handler
-             (on-success-handler (assoc identity :return return))
-             (authenticate (response/redirect return) identity))
-           (response/redirect "/unauthorized"))
-         (response/redirect "/unauthorized"))))))
+       (assoc context :response
+              (if (and state code return token provider (= state token) p)
+                (if-let [identity (process-callback code p)]
+                  (if on-success-handler
+                    (on-success-handler context (assoc identity :return return))
+                    (authenticate (response/redirect return) identity))
+                  (response/redirect "/unauthorized"))
+                (response/redirect "/unauthorized")))))))
