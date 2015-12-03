@@ -2,7 +2,6 @@
   (:require [geheimtur.util.auth :refer [authenticate logout]]
             [geheimtur.util.response :as response]
             [geheimtur.util.url :as url]
-            [io.pedestal.interceptor :refer [interceptor]]
             [io.pedestal.interceptor.helpers :as h]))
 
 (defn- default-form-reader
@@ -27,23 +26,24 @@
            login-uri         "/login"
            redirect-on-login true}
     :as   config}]
-  (interceptor {:name  ::default-login-handler
-                :enter (fn [{request :request :as context}]
-                         (let [{:keys [form-params query-params]} request
-                               return-url                         (when redirect-on-login (or (:return form-params)
-                                                                                              (:return query-params)))
-                               credentials                        (form-reader form-params)]
-                           (assoc context :response
-                                  (if-let [identity (and credentials (credential-fn context credentials))]
-                                    (authenticate
-                                     (response/redirect-after-post (if (and return-url (url/relative? return-url))
-                                                                     return-url
-                                                                     "/"))
-                                     identity)
-                                    (let [redirect-url (if return-url
-                                                         (str login-uri "?error=true&return=" return-url)
-                                                         (str login-uri "?error=true"))]
-                                      (response/redirect-after-post redirect-url))))))}))
+  (h/before
+   ::default-login-handler
+   (fn [{request :request :as context}]
+     (let [{:keys [form-params query-params]} request
+           return-url                         (when redirect-on-login (or (:return form-params)
+                                                                          (:return query-params)))
+           credentials                        (form-reader form-params)]
+       (assoc context :response
+              (if-let [identity (and credentials (credential-fn context credentials))]
+                (authenticate
+                 (response/redirect-after-post (if (and return-url (url/relative? return-url))
+                                                 return-url
+                                                 "/"))
+                 identity)
+                (let [redirect-url (if return-url
+                                     (str login-uri "?error=true&return=" return-url)
+                                     (str login-uri "?error=true"))]
+                  (response/redirect-after-post redirect-url))))))))
 
 (def default-logout-handler
   "Returns a Ring response that redirects to / and unsets identity associated with corrent session."
