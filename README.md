@@ -13,6 +13,10 @@ Pedestal applications as easily (hopefully) as [friend] [2] does with Ring appli
 Also, I didn't want to mess around with routing that is handled quite nicely by Pedestal itself, so if an authentication flow
 requires some extra routes to be added, those route should be plugged into the Pedestal routing system manually.
 
+## ChangeLog
+
+The ChangeLog and migration instructions can be found in [CHANGES.md](CHANGES.md).
+
 ## Usage
 
 Include the library in your leiningen project dependencies:
