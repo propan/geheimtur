@@ -2,13 +2,11 @@
 
 a Clojure library that allows you to secure your Pedestal applications with minimum efforts.
 
-[Live Demo] [1]
+[Live Demo](http://geheimtur.herokuapp.com)
 
 ## Motivation
 
-I do know that there is a great [friend] [2] library out there, but I had some problems making it work with a Pedestal
-application and do that the way I wanted, so I decided to implement something that does (hopefully) some good work securing
-Pedestal applications as easily (hopefully) as [friend] [2] does with Ring applications.
+I do know that there is a great [friend](https://github.com/cemerick/friend) library out there, but I had some problems making it work with a Pedestal application and do that the way I wanted, so I decided to implement something that does (hopefully) some good work securing Pedestal applications as easily (hopefully) as [friend](https://github.com/cemerick/friend) does with Ring applications.
 
 Also, I didn't want to mess around with routing that is handled quite nicely by Pedestal itself, so if an authentication flow
 requires some extra routes to be added, those route should be plugged into the Pedestal routing system manually.
@@ -27,7 +25,7 @@ Include the library in your leiningen project dependencies:
 
 ## Examples
 
-You can find the sources of a demo application in [geheimtur-demo] [3] repository.
+You can find the sources of a demo application in [geheimtur-demo](https://github.com/propan/geheimtur-demo) repository.
 
 **The examples below do not duplicate information available as docstrings, if you want to know all available options - check the docs in the code.**
 
@@ -94,7 +92,7 @@ that can be used to authenticate users when you don't want to implement your own
       ["/restricted" {:get views/interactive-restricted} ^:interceptors [(guard :silent? false)]]]]]])
 ```
 
-A complete example can be found [here] [3].
+A complete example can be found [here](https://github.com/propan/geheimtur-demo).
 
 #### OAuth 2.0
 
@@ -126,15 +124,10 @@ Geheimtur provides handlers for users redirection and callbacks out of the box, 
       ["/restricted" {:get views/interactive-restricted} ^:interceptors [(guard :silent? false)]]]]]])
 ```
 
-A complete example can be found [here] [3].
+A complete example can be found [here](https://github.com/propan/geheimtur-demo).
 
 ## License
 
-Copyright © 2015 Pavel Prokopenko
+Copyright © 2015-2017 Pavel Prokopenko
 
-Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version.
-
-[1]: http://geheimtur.herokuapp.com
-[2]: https://github.com/cemerick/friend
-[3]: https://github.com/propan/geheimtur-demo
+Distributed under the Eclipse Public License either version 1.0 or (at your option) any later version.
