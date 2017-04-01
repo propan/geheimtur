@@ -24,14 +24,14 @@
                                  :success))})]
     (testing "Redirects on success to return url"
       (let [{response :response}
-            (handler {:request {:form-params  {"username" "user" "password" "password"}
+            (handler {:request {:form-params  {:username "user" :password "password"}
                                 :query-params {:return "/redirect"}}})]
         (is (= 303 (:status response)))
         (is (= "/redirect" (get-in response [:headers "Location"])))))
 
     (testing "Ignores absolute return urls"
       (let [{response :response}
-            (handler {:request {:form-params  {"username" "user" "password" "password"}
+            (handler {:request {:form-params  {:username "user" :password "password"}
                                 :query-params {:return "http://evil.com"}}})]
         (is (= 303 (:status response)))
         (is (= "/" (get-in response [:headers "Location"])))))))

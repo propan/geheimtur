@@ -4,14 +4,6 @@
             [geheimtur.util.url :as url]
             [io.pedestal.interceptor.helpers :as h]))
 
-(defn- default-form-reader
-  [form]
-  (let [username (get form "username")
-        password (get form "password")]
-    (when (and username password)
-      {:username username
-       :password password})))
-
 (defn default-login-handler
   "Creates a handler for POST login requests.
 
@@ -22,7 +14,7 @@
       :redirect-on-login - a flag that enables redirection to :return uri, default is true"
   [{:keys [credential-fn form-reader login-uri redirect-on-login]
     :or   {credential-fn    (constantly nil)
-           form-reader       default-form-reader
+           form-reader       identity
            login-uri         "/login"
            redirect-on-login true}
     :as   config}]
