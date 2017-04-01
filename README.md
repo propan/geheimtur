@@ -43,9 +43,9 @@ In the example below, only administrators are allowed to access the pages under 
 this is an illustration of `guard` usage and not a completely functional example.)
 
 ```clojure
-(defroutes routes
-  [[["/" {:get views/home-page}
-     ["/admin" {:get views/admin} ^:interceptors [(guard :roles #{:admin})]]]]])
+(def routes
+  #{["/" :get `views/home-page]
+    ["/admin" :get [(guard :roles #{:admin}) `views/admin]]})
 ```
 
 ### Enabling a flow
@@ -61,9 +61,9 @@ You can enable http-basic authentication by putting the `http-basic` interceptor
 - `credential-fn` - a function that, given a request context and a map with username and password, returns a corresponding identity
 
 ```clojure
-(defroutes routes
-  [[["/" {:get views/home-page ^:interceptors [(http-basic "Secure App" get-identity-from-db)]}
-     ["/admin" {:get views/admin} ^:interceptors [(guard :roles #{:admin})]]]]])
+(def routes
+  #{["/"      :get [(http-basic "Secure App" get-identity-from-db) `views/home-page]]
+    ["/admin" :get [(http-basic "Secure App" get-identity-from-db) (guard :roles #{:admin}) `views/admin]]})
 ```
 
 #### Form-based
@@ -72,24 +72,26 @@ You can use the `interactive` interceptor to redirect users to the login page wh
 At this moment, it accepts only one configuration option - `:login-uri`, by default users are redirected to the `/login` page.
 
 ```clojure
-(defroutes routes
-  [[["/" {:get views/home-page ^:interceptors [(interactive {:login-uri "/users/login"})]
-     ["/admin" {:get views/admin} ^:interceptors [(guard :roles #{:admin})]]]]])
+(def routes
+  #{["/"      :get [(interactive {:login-uri "/users/login"}) `views/home-page]]
+    ["/admin" :get [(interactive {:login-uri "/users/login"}) (guard :roles #{:admin}) `views/admin]])
 ```
 
 After doing so, you just need to add handlers that render the login page and authenticate users. Geheimtur comes with a default :POST handler
 that can be used to authenticate users when you don't want to implement your own. The `form-based` interceptor requires sessions to be enabled.
 
 ```clojure
-(defroutes routes
-  [[["/" {:get views/home-page}
-     ^:interceptors [(body-params/body-params)
-                     bootstrap/html-body
-                     session-interceptor]
-     ["/login" {:get views/login-page :post (default-login-handler {:credential-fn credentials})}]
-     ["/logout" {:get default-logout-handler}]
-     ["/interactive" {:get views/interactive-index} ^:interceptors [access-forbidden-interceptor (interactive {})]
-      ["/restricted" {:get views/interactive-restricted} ^:interceptors [(guard :silent? false)]]]]]])
+(def common-interceptors [(body-params/body-params) bootstrap/html-body session-interceptor])
+(def interactive-interceptors (into common-interceptors [access-forbidden-interceptor (interactive {})]))
+
+(def routes
+  #{["/"                       :get (conj common-interceptors `views/home-page)]
+    ["/login"                  :get (conj common-interceptors `view/login-page)]
+    ["/login"                  :post (conj common-interceptors (default-login-handler {:credential-fn credentials
+                                                                                       :form-reader   identity}))]
+    ["/logout"                 :get (conj common-interceptors default-logout-handler)]
+    ["/interactive"            :get (conj interactive-interceptors `views/interactive-index)]
+    ["/interactive/restricted" :get (into interactive-interceptors [(guard :silent? false) `views/interactive-restricted])]})
 ```
 
 A complete example can be found [here](https://github.com/propan/geheimtur-demo).
@@ -111,17 +113,19 @@ Geheimtur provides handlers for users redirection and callbacks out of the box, 
             :user-info-url      "https://api.github.com/user"
             :user-info-parse-fn #(-> % :body (parse-string true))}})
 
-(defroutes routes
-  [[["/" {:get views/home-page}
-     ^:interceptors [(body-params/body-params)
-                     bootstrap/html-body
-                     session-interceptor]
-     ["/login" {:get views/login-page :post login-post-handler}]
-     ["/logout" {:get default-logout-handler}]
-     ["/oauth.login" {:get (authenticate-handler providers)}]
-     ["/oauth.callback" {:get (callback-handler providers)}]
-     ["/interactive" {:get views/interactive-index} ^:interceptors [access-forbidden-interceptor (interactive {})]
-      ["/restricted" {:get views/interactive-restricted} ^:interceptors [(guard :silent? false)]]]]]])
+(def common-interceptors [(body-params/body-params) bootstrap/html-body session-interceptor])
+(def interactive-interceptors (into common-interceptors [access-forbidden-interceptor (interactive {})]))
+
+(def routes
+  #{["/"                       :get (conj common-interceptors `views/home-page)]
+    ["/login"                  :get (conj common-interceptors `view/login-page)]
+    ["/login"                  :post (conj common-interceptors (default-login-handler {:credential-fn credentials
+                                                                                       :form-reader   identity}))]
+    ["/oauth.login"            :get (conj common-interceptors (authenticate-handler providers))]
+    ["/oauth.callback"         :get (conj common-interceptors (callback-handler providers))]
+    ["/logout"                 :get (conj common-interceptors default-logout-handler)]
+    ["/interactive"            :get (conj interactive-interceptors `views/interactive-index)]
+    ["/interactive/restricted" :get (into interactive-interceptors [(guard :silent? false) `views/interactive-restricted])]})
 ```
 
 A complete example can be found [here](https://github.com/propan/geheimtur-demo).
