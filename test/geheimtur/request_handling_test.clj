@@ -18,7 +18,7 @@
    :headers {}})
 
 (defn identity-injector
-  "An intercepter that authenticates a request with the given identity."
+  "An interceptor that authenticates a request with the given identity."
   [identity]
   (interceptor {:name  ::identity-injector
                 :enter (fn [context]

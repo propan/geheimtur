@@ -4,7 +4,8 @@
             [geheimtur.util.response :as response]
             [io.pedestal.log :as log]
             [geheimtur.impl.interactive :refer [interactive-error-handler]]
-            [geheimtur.impl.http-basic :refer [http-basic-authenticate http-basic-error-handler]]))
+            [geheimtur.impl.http-basic :refer [http-basic-authenticate http-basic-error-handler]]
+            [geheimtur.impl.token :refer [token-authenticate token-error-handler]]))
 
 (defn access-forbidden-handler
   [silent? & {:keys [type reason reason-fn]
@@ -18,7 +19,7 @@
   (fn [{request :request :as context}]
     (if (authenticated? request)
       (if-not (or (empty? roles)
-                (authorized? request roles))
+                  (authorized? request roles))
         (unauthorized-fn context)
         context)
       (unauthenticated-fn context))))
@@ -66,3 +67,16 @@
   (let [config (merge {:login-uri "/login"} config)]
     (interceptor {:name  ::interactive-auth
                   :error (access-forbidden-catcher (interactive-error-handler config))})))
+
+(defn token
+  "An interceptor that provides token-based authentication.
+      credential-fn - a function that given a request context and an authentication token returns the identity associated with it
+
+   Accepts optional parameters:
+      :token-fn      - a function that given a request context returns the token associated with it
+      :error-fn      - a function to handle authentication/authorization errors"
+  [credential-fn & options]
+  (let [options (assoc options :credential-fn credential-fn)]
+    (interceptor {:name  ::token-auth
+                  :enter (token-authenticate options)
+                  :error (access-forbidden-catcher (token-error-handler options))})))
