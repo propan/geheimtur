@@ -1,7 +1,5 @@
-(ns ^{:doc "Integration tests of request handling with the geheimtur interceptors."}
-    geheimtur.request-handling-test
-  (:require [io.pedestal.http.route.definition :refer [defroutes]]
-            [io.pedestal.interceptor :refer [interceptor]]
+(ns geheimtur.request-handling-test
+  (:require [io.pedestal.interceptor :refer [interceptor]]
             [io.pedestal.interceptor.helpers :refer [defhandler]]
             [io.pedestal.http :as service]
             [geheimtur.util.auth :refer [authenticate]]
@@ -17,72 +15,43 @@
    :body "Request handled!"
    :headers {}})
 
-(defn identity-injector
-  "An interceptor that authenticates a request with the given identity."
-  [identity]
-  (interceptor {:name  ::identity-injector
-                :enter (fn [context]
-                         (update-in context [:request] authenticate identity))}))
-
-(defroutes routes
-  [[:request-handling "geheimtur.io"
-    ["/" {:get request-handler}
-     ["/http-basic" ^:interceptors [(http-basic "Test Realm" (constantly true))]
-
-      ["/anonymous"
-        ["/loud" {:get [:anonymous-silent request-handler]} ^:interceptors [(guard :silent? false)]]
-        ["/silent" {:get [:anonymous-loud request-handler]} ^:interceptors [(guard)]]
-       ]
-
-      ["/identified"
-       ["/no-role" ^:interceptors [(identity-injector {})]
-         ["/ok" {:get [:no-role-ok request-handler]} ^:interceptors [(guard)]]
-         ["/not-ok" {:get [:no-role-not-ok request-handler]} ^:interceptors [(guard :roles #{:user} :silent? false)]]
-         ]
-       ["/user" ^:interceptors [(identity-injector {:roles #{:user }})]
-          ["/ok" {:get [:user-ok request-handler]} ^:interceptors [(guard :roles #{:user})]]
-          ["/not-enough-rights" {:get [:not-enough-rights request-handler]} ^:interceptors [(guard :roles #{:admin})]]
-          ["/not-enough-rights-loud" {:get [:not-enough-rights-silent request-handler]} ^:interceptors [(guard :roles #{:admin} :silent? false)]]
-        ]
-       ["/admin" ^:interceptors [(identity-injector {:roles #{:admin }})]
-        ["/ok" {:get [:admin-ok request-handler]} ^:interceptors [(guard :roles #{:admin})]]
-        ["/user/ok" {:get [:admin-user-ok request-handler]} ^:interceptors [(guard :roles #{:user :admin})]]
-        ]
-       ]
-
-      ]
-     ]]])
-
-(def app
-  (::service/service-fn (-> {::service/routes routes}
-                          service/default-interceptors
-                          service/service-fn)))
-
-(deftest http-basic-test
-  (are [url body] (= body (->> url (response-for app :get) :body))
-    ;; anonymous access
-    "http://geheimtur.io/http-basic/anonymous/loud" "You are not allowed to access to this resource"
-    "http://geheimtur.io/http-basic/anonymous/silent" "Not Found"
-    ;; user with no roles assigned
-    "http://geheimtur.io/http-basic/identified/no-role/ok" "Request handled!"
-    "http://geheimtur.io/http-basic/identified/no-role/not-ok" "You are not allowed to access to this resource"
-    ;; user access
-    "http://geheimtur.io/http-basic/identified/user/ok" "Request handled!"
-    "http://geheimtur.io/http-basic/identified/user/not-enough-rights" "Not Found"
-    "http://geheimtur.io/http-basic/identified/user/not-enough-rights-loud" "You are not allowed to access to this resource"
-    ;; admin access
-    "http://geheimtur.io/http-basic/identified/admin/ok" "Request handled!"
-    "http://geheimtur.io/http-basic/identified/admin/user/ok" "Request handled!"
-    ;; basic routes
-    "http://geheimtur.io/unrouted" "Not Found"
-    "http://geheimtur.io/" "Request handled!"))
-
 (defn make-app
   [options]
   (-> options
       service/default-interceptors
       service/service-fn
       ::service/service-fn))
+
+(defn credentials-fn
+  [_ {:keys [username password]}]
+  (let [credentials (str username ":" password)]
+    (case credentials
+      "user:123456" {:name "Bob"}
+      "admin:67890" {:name "Carol" :roles #{:admin}}
+      nil)))
+
+(deftest http-basic-test
+  (let [interceptor (http-basic "Demo" credentials-fn)
+        routes      #{["/silent"       :get [interceptor (guard :silent? true)  request-handler]                  :route-name :protected-silent]
+                      ["/loud"         :get [interceptor (guard :silent? false) request-handler]                  :route-name :protected-loud]
+                      ["/admin/silent" :get [interceptor (guard :roles #{:admin} :silent? true) request-handler]  :route-name :admin-silent]
+                      ["/admin/loud"   :get [interceptor (guard :roles #{:admin} :silent? false) request-handler] :route-name :admin-loud]}
+        app         (make-app {::service/routes routes})]
+    (testing "Unauthenticated requests are rejected"
+      (is (= "Not Found" (:body (response-for app :get "/silent"))))
+      (is (= "You are not allowed to access to this resource" (:body (response-for app :get "/loud")))))
+
+    (testing "Authenticated requests go through"
+      (is (= "Request handled!" (:body (response-for app :get "/silent" :headers {"Authorization" "Basic dXNlcjoxMjM0NTY="}))))
+      (is (= "Request handled!" (:body (response-for app :get "/loud" :headers {"Authorization" "Basic dXNlcjoxMjM0NTY="})))))
+
+    (testing "Unauthorised requests are rejected"
+      (is (= "Not Found" (:body (response-for app :get "/admin/silent" :headers {"Authorization" "Basic dXNlcjoxMjM0NTY="}))))
+      (is (= "You are not allowed to access to this resource" (:body (response-for app :get "/admin/loud" :headers {"Authorization" "Basic dXNlcjoxMjM0NTY="})))))
+
+    (testing "Authorised requests go through"
+      (is (= "Request handled!" (:body (response-for app :get "/admin/silent" :headers {"Authorization" "Basic YWRtaW46Njc4OTA="}))))
+      (is (= "Request handled!" (:body (response-for app :get "/admin/loud" :headers {"Authorization" "Basic YWRtaW46Njc4OTA="})))))))
 
 (deftest token-test
   (let [interceptor (token #(case %2 "123456" {:name "Bob"} "67890" {:name "Carol" :roles #{:admin}} nil))
