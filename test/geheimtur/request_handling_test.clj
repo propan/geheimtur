@@ -1,11 +1,11 @@
 (ns ^{:doc "Integration tests of request handling with the geheimtur interceptors."}
-  geheimtur.request-handling-test
+    geheimtur.request-handling-test
   (:require [io.pedestal.http.route.definition :refer [defroutes]]
             [io.pedestal.interceptor :refer [interceptor]]
             [io.pedestal.interceptor.helpers :refer [defhandler]]
             [io.pedestal.http :as service]
             [geheimtur.util.auth :refer [authenticate]]
-            [geheimtur.interceptor :as interceptor :refer :all ])
+            [geheimtur.interceptor :as interceptor :refer :all])
   (:use [clojure.test]
         [io.pedestal.test]))
 
@@ -59,9 +59,7 @@
                           service/service-fn)))
 
 (deftest http-basic-test
-  (are [url body] (= body (->> url
-                            (response-for app :get)
-                            :body))
+  (are [url body] (= body (->> url (response-for app :get) :body))
     ;; anonymous access
     "http://geheimtur.io/http-basic/anonymous/loud" "You are not allowed to access to this resource"
     "http://geheimtur.io/http-basic/anonymous/silent" "Not Found"
@@ -78,3 +76,27 @@
     ;; basic routes
     "http://geheimtur.io/unrouted" "Not Found"
     "http://geheimtur.io/" "Request handled!"))
+
+(defn make-app
+  [options]
+  (-> options
+      service/default-interceptors
+      service/service-fn
+      ::service/service-fn))
+
+(deftest token-test
+  (let [interceptor (token #(case %2 "123456" {:name "Bob"} "67890" {:name "Carol" :roles #{:admin}} nil))
+        routes #{["/"       :get [interceptor (guard :silent? false) request-handler]                  :route-name :protected-route]
+                 ["/secret" :get [interceptor (guard :silent? false :roles #{:admin}) request-handler] :route-name :admin-only-route]}
+        app    (make-app {::service/routes routes})]
+    (testing "Unauthenticated requests are rejected"
+      (is (= "You are not allowed to access to this resource" (:body (response-for app :get "/")))))
+
+    (testing "Authenticated requests go through"
+      (is (= "Request handled!" (:body (response-for app :get "/" :headers {"Authorization" "Bearer 123456"})))))
+
+    (testing "Unauthorised requests are rejected"
+      (is (= "You are not allowed to access to this resource" (:body (response-for app :get "/secret" :headers {"Authorization" "Bearer 123456"})))))
+
+    (testing "Authorised requests go through"
+      (is (= "Request handled!" (:body (response-for app :get "/secret" :headers {"Authorization" "Bearer 67890"})))))))
