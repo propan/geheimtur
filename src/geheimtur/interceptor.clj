@@ -75,7 +75,7 @@
    Accepts optional parameters:
       :token-fn      - a function that given a request context returns the token associated with it
       :error-fn      - a function to handle authentication/authorization errors"
-  [credential-fn & options]
+  [credential-fn & {:as options}]
   (interceptor {:name  ::token-auth
                 :enter (token-authenticate (assoc options :credential-fn credential-fn))
                 :error (access-forbidden-catcher (token-error-handler options))}))
