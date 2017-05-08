@@ -20,7 +20,7 @@ The ChangeLog and migration instructions can be found in [CHANGES.md](CHANGES.md
 Include the library in your leiningen project dependencies:
 
 ```clojure
-[geheimtur "0.3.0"]
+[geheimtur "0.3.2"]
 ```
 
 ## Examples
@@ -126,6 +126,19 @@ Geheimtur provides handlers for users redirection and callbacks out of the box, 
     ["/logout"                 :get (conj common-interceptors default-logout-handler)]
     ["/interactive"            :get (conj interactive-interceptors `views/interactive-index)]
     ["/interactive/restricted" :get (into interactive-interceptors [(guard :silent? false) `views/interactive-restricted])]})
+```
+
+A complete example can be found [here](https://github.com/propan/geheimtur-demo).
+
+#### Token-based
+
+If you would like to secure your API using bearer tokens (or any other kind of tokens), `token` interceptor is something you might want to consider.
+
+**Please see `token` interceptor documentation for the description of all possible options.**
+
+```clojure
+(def routes
+  #{["/api/restricted" :get  [http/json-body (token token-credentials) (guard :silent? false) `views/api-restricted]]})
 ```
 
 A complete example can be found [here](https://github.com/propan/geheimtur-demo).
