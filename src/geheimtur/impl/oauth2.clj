@@ -49,13 +49,12 @@
    (fn [req]
      (let [{:keys [query-params] :as request} req]
        (when-let [provider (:provider query-params)]
-         (when-let [{:keys [auth-url client-id scope callback-uri client-params]
-                     :or {:client-params {}}} (get providers (keyword provider))]
+         (when-let [{:keys [auth-url client-id scope callback-uri client-params]} (get providers (keyword provider))]
            (let [token (create-afs-token)
-                 query (merge {:client_id     client-id
-                               :response_type "code"
-                               :scope         scope
-                               :state         token} client-params)
+                 query (merge client-params {:client_id     client-id
+                                             :response_type "code"
+                                             :scope         scope
+                                             :state         token})
                  query (if callback-uri
                          (assoc query :redirect_uri callback-uri)
                          query)
