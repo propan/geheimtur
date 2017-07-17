@@ -1,4 +1,4 @@
-(defproject geheimtur "0.3.3-SNAPSHOT"
+(defproject com.yetanalytics/geheimtur "0.3.3-SNAPSHOT"
   :description "a secret door to your Pedestal application"
   :url "http://github.com/propan/geheimtur"
   :license {:name "Eclipse Public License"
