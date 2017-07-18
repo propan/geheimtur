@@ -30,6 +30,7 @@
                  :client-id          \"your-client-id\"
                  :client-secret      \"your-client-secret\"
                  :scope              \"user:email\"
+                 :client-params      {:foo \"bar\"}
                  :token-url          \"https://github.com/login/oauth/access_token\"
                  :token-parse-fn     (fn [resp] (parse-string (:body resp)))
                  :user-info-url      \"https://api.github.com/user\"
@@ -37,10 +38,11 @@
                  :on-success-handler on-github-success}})
 
   The following keys in provider's configuration are optional:
+      :client-params      - a map of extra query parameters to be included in the authorization request
       :token-parse-fn     - a function that accepts the token endpoint response and returns a map with the parsed
                             OAuth2 token response. The successfuly parsed response must have at least :access_token key.
       :user-info-url      - if defined, will be used to get user's details after successful access token acquisition
-      :user-info-parse-fn - if definded, will be applied to the response of user's details endpoint
+      :user-info-parse-fn - if defined, will be applied to the response of user's details endpoint
       :on-success-handler - a function that accepts a request context and an obtained identity/access token map and returns a correct ring response.
                             It is called only if an identity/access token is resolved."
   [providers]
