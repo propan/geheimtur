@@ -27,6 +27,13 @@
     (let [{handler :enter} (authenticate-handler {})]
       (is (nil? (:response (handler {:request {:query-params {}}}))))
       (is (nil? (:response (handler {:request {:query-params {:provider "github"}}}))))))
+
+  (testing "successfully merges client-params map into request params"
+    (let [client-params-provider (assoc-in providers [:github :client-params] {:foo "bar"})
+          {handler :enter} (authenticate-handler client-params-provider)
+          m (handler {:request {:query-params {:provider "github" :return "/return"}}})
+          location (-> m :response :headers (get "Location"))]
+      (is (re-find #"foo=bar" location))))
   
   (testing "Successfuly redirects and stores state in the session"
     (let [{handler :enter} (authenticate-handler providers)
