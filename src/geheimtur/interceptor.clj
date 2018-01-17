@@ -9,7 +9,7 @@
 
 (defn access-forbidden-handler
   [silent? & {:keys [type reason reason-fn]
-              :or   {type :unauthenticated reason "You are not allowed to access to this resource"}}]
+              :or   {type :unauthenticated reason "You are not allowed to access this resource"}}]
   (let [reason-fn (or reason-fn (constantly reason))]
     (fn [context]
       (throw-forbidden {:silent? silent? ::auth/type type :reason (reason-fn type context)}))))

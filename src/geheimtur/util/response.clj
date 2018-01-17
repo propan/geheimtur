@@ -20,7 +20,7 @@
   []
   {:status  403
    :headers {}
-   :body    "You are not allowed to access to this resource"})
+   :body    "You are not allowed to access this resource"})
 
 (defn unauthorized
   "Returns an HTTP 401 Unauthorized response."

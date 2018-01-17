@@ -7,7 +7,7 @@
   (testing "Default error handler return 403 response"
     (is (= {:status  403
             :headers {}
-            :body    "You are not allowed to access to this resource"}
+            :body    "You are not allowed to access this resource"}
            (#'geheimtur.impl.token/default-error-handler nil (ex-info "403 Forbidden" {::auth/type ::auth/unauthenticated}))))))
 
 (deftest bearer-token-parser-test
@@ -50,7 +50,7 @@
       (is (= {:request  {}
               :response {:status  403
                          :headers {}
-                         :body    "You are not allowed to access to this resource"}}
+                         :body    "You are not allowed to access this resource"}}
              (error-handler {:request {}} {:error true})))))
 
   (testing "Uses the given error handler"

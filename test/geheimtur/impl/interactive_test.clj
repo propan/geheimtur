@@ -14,4 +14,4 @@
         "Unauthorized error"
       (let [context (handler {:request {:path-info "/some-path"}} {::auth/type :unauthorized})]
         (is (= 403 (get-in context [:response :status ])))
-        (is (= "You are not allowed to access to this resource" (get-in context [:response :body ])))))))
+        (is (= "You are not allowed to access this resource" (get-in context [:response :body ])))))))

@@ -39,7 +39,7 @@
         app         (make-app {::service/routes routes})]
     (testing "Unauthenticated requests are rejected"
       (is (= "Not Found" (:body (response-for app :get "/silent"))))
-      (is (= "You are not allowed to access to this resource" (:body (response-for app :get "/loud")))))
+      (is (= "You are not allowed to access this resource" (:body (response-for app :get "/loud")))))
 
     (testing "Authenticated requests go through"
       (is (= "Request handled!" (:body (response-for app :get "/silent" :headers {"Authorization" "Basic dXNlcjoxMjM0NTY="}))))
@@ -47,7 +47,7 @@
 
     (testing "Unauthorised requests are rejected"
       (is (= "Not Found" (:body (response-for app :get "/admin/silent" :headers {"Authorization" "Basic dXNlcjoxMjM0NTY="}))))
-      (is (= "You are not allowed to access to this resource" (:body (response-for app :get "/admin/loud" :headers {"Authorization" "Basic dXNlcjoxMjM0NTY="})))))
+      (is (= "You are not allowed to access this resource" (:body (response-for app :get "/admin/loud" :headers {"Authorization" "Basic dXNlcjoxMjM0NTY="})))))
 
     (testing "Authorised requests go through"
       (is (= "Request handled!" (:body (response-for app :get "/admin/silent" :headers {"Authorization" "Basic YWRtaW46Njc4OTA="}))))
@@ -59,13 +59,13 @@
                  ["/secret" :get [interceptor (guard :silent? false :roles #{:admin}) request-handler] :route-name :admin-only-route]}
         app    (make-app {::service/routes routes})]
     (testing "Unauthenticated requests are rejected"
-      (is (= "You are not allowed to access to this resource" (:body (response-for app :get "/")))))
+      (is (= "You are not allowed to access this resource" (:body (response-for app :get "/")))))
 
     (testing "Authenticated requests go through"
       (is (= "Request handled!" (:body (response-for app :get "/" :headers {"Authorization" "Bearer 123456"})))))
 
     (testing "Unauthorised requests are rejected"
-      (is (= "You are not allowed to access to this resource" (:body (response-for app :get "/secret" :headers {"Authorization" "Bearer 123456"})))))
+      (is (= "You are not allowed to access this resource" (:body (response-for app :get "/secret" :headers {"Authorization" "Bearer 123456"})))))
 
     (testing "Authorised requests go through"
       (is (= "Request handled!" (:body (response-for app :get "/secret" :headers {"Authorization" "Bearer 67890"})))))))
