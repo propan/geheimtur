@@ -20,7 +20,7 @@ The ChangeLog and migration instructions can be found in [CHANGES.md](CHANGES.md
 Include the library in your leiningen project dependencies:
 
 ```clojure
-[geheimtur "0.3.3"]
+[geheimtur "0.3.4"]
 ```
 
 ## Examples
@@ -145,6 +145,6 @@ A complete example can be found [here](https://github.com/propan/geheimtur-demo)
 
 ## License
 
-Copyright © 2015-2017 Pavel Prokopenko
+Copyright © 2015-2018 Pavel Prokopenko
 
 Distributed under the Eclipse Public License either version 1.0 or (at your option) any later version.
