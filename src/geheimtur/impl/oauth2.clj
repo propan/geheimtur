@@ -69,18 +69,21 @@
 
 (defn fetch-token
   "Fetches an OAuth access token using the given code and provider's configuration."
-  [code {:keys [token-url client-id client-secret callback-uri token-parse-fn] :as provider}]
+  [code {:keys [token-url client-id client-secret callback-uri token-parse-fn
+                post-opts] :as provider}]
   (let [query {:code          code
                :client_id     client-id
                :client_secret client-secret
                :grant_type    "authorization_code"}
         query (if callback-uri
                 (assoc query :redirect_uri callback-uri)
-                query)]
+                query)
+        opts (merge {:form-params           query
+                     :throw-entire-message? true
+                     :as                    (when (nil? token-parse-fn) :auto)}
+              post-opts)]
     (try
-      (let [response (client/post token-url {:form-params           query
-                                             :throw-entire-message? true
-                                             :as                    (when (nil? token-parse-fn) :auto)})]
+      (let [response (client/post token-url opts)]
         (when (client/success? response)
           (if (nil? token-parse-fn)
             (:body response)
