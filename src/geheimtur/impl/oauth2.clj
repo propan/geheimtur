@@ -11,7 +11,7 @@
 
 (defn create-afs-token
   "Creates a random state token to prevent request forgery."
-  []
+  [_]
   (.toString (BigInteger. 130 (SecureRandom.)) 32))
 
 (defn create-url
@@ -31,6 +31,7 @@
                  :client-secret      \"your-client-secret\"
                  :scope              \"user:email\"
                  :client-params      {:foo \"bar\"}
+                 :create-state-fn    (fn [req] (generate-a-token req))
                  :token-url          \"https://github.com/login/oauth/access_token\"
                  :token-parse-fn     (fn [resp] (parse-string (:body resp)))
                  :user-info-url      \"https://api.github.com/user\"
@@ -51,8 +52,15 @@
    (fn [req]
      (let [{:keys [query-params] :as request} req]
        (when-let [provider (:provider query-params)]
-         (when-let [{:keys [auth-url client-id scope callback-uri client-params]} (get providers (keyword provider))]
-           (let [token (create-afs-token)
+         (when-let [{:keys [auth-url
+                            client-id
+                            scope
+                            callback-uri
+                            client-params
+                            create-state-fn]
+                     :or {create-state-fn
+                          create-afs-token}} (get providers (keyword provider))]
+           (let [token (create-state-fn request)
                  query (merge client-params {:client_id     client-id
                                              :response_type "code"
                                              :scope         scope
