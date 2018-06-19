@@ -40,6 +40,7 @@
 
   The following keys in provider's configuration are optional:
       :client-params      - a map of extra query parameters to be included in the authorization request
+      :create-state-fn    - a function that accepts the authentication request and returns a state token.
       :token-parse-fn     - a function that accepts the token endpoint response and returns a map with the parsed
                             OAuth2 token response. The successfuly parsed response must have at least :access_token key.
       :user-info-url      - if defined, will be used to get user's details after successful access token acquisition
