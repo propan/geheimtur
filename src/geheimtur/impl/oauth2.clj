@@ -32,6 +32,7 @@
                  :scope              \"user:email\"
                  :client-params      {:foo \"bar\"}
                  :create-state-fn    (fn [req] (generate-a-token req))
+                 :check-state-fn     (fn [context state token] (and state token (= state token)))
                  :token-url          \"https://github.com/login/oauth/access_token\"
                  :token-parse-fn     (fn [resp] (parse-string (:body resp)))
                  :user-info-url      \"https://api.github.com/user\"
@@ -41,6 +42,8 @@
   The following keys in provider's configuration are optional:
       :client-params      - a map of extra query parameters to be included in the authorization request
       :create-state-fn    - a function that accepts the authentication request and returns a state token.
+      :check-state-fn     - a function that accepts the context, the state token in the callback request,
+                            and the one stored in the session and returns true if they match.
       :token-parse-fn     - a function that accepts the token endpoint response and returns a map with the parsed
                             OAuth2 token response. The successfuly parsed response must have at least :access_token key.
       :user-info-url      - if defined, will be used to get user's details after successful access token acquisition
@@ -141,6 +144,12 @@
   (when-let [token (fetch-token code provider)]
     (resolve-identity token provider)))
 
+(defn- default-check-state-fn
+  "Verifies that state and token are non-nil, and match."
+  [_ state token]
+  (and state token
+       (= state token)))
+
 (defn callback-handler
   "Creates an OAuth call-back handler based on a map of OAuth providers.
 
@@ -152,9 +161,12 @@
      (let [{:keys [query-params session]}     request
            {:keys [state code]}               query-params
            {:keys [return token provider]}    (::callback-state session)
-           {:keys [on-success-handler] :as p} (get providers (keyword provider))]
+           {:keys [on-success-handler
+                   check-state-fn] :as p
+            :or {check-state-fn
+                 default-check-state-fn}} (get providers (keyword provider))]
        (assoc context :response
-              (if (and state code return token provider (= state token) p)
+              (if (and code return provider p (check-state-fn context state token))
                 (if-let [identity (process-callback code p)]
                   (if on-success-handler
                     (on-success-handler context (assoc identity :return return))
