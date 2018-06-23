@@ -34,7 +34,7 @@
           m (handler {:request {:query-params {:provider "github" :return "/return"}}})
           location (-> m :response :headers (get "Location"))]
       (is (re-find #"foo=bar" location))))
-  
+
   (testing "Successfuly redirects and stores state in the session"
     (let [{handler :enter} (authenticate-handler providers)
           {response :response}         (handler {:request {:query-params {:provider "github" :return "/return"}}})
@@ -51,7 +51,18 @@
         (is (= "client-id" (:client_id query)))
         (is (= "user:email" (:scope query)))
         (is (= "/oauth.callback" (:redirect_uri query)))
-        (is (= (:token session-status) (:state query)))))))
+        (is (= (:token session-status) (:state query))))))
+
+  (testing "Stores custom state in the session"
+    (let [{handler :enter} (authenticate-handler (assoc-in providers
+                                                           [:github
+                                                            :create-state-fn]
+                                                           (constantly "foo")))
+          {response :response}         (handler {:request {:query-params {:provider "github" :return "/return"}}})
+          session-status   (get-in response [:session ::geheimtur.impl.oauth2/callback-state])
+          location         (get-in response [:headers "Location"])
+          query (get-query location)]
+      (is (= "foo" (:token session-status) (:state query))))))
 
 (deftest fetch-token-test
   (let [code     "123-ASD-456-QWE"
@@ -192,4 +203,29 @@
                                                                                     :success))))]
         (with-redefs-fn {#'geheimtur.impl.oauth2/process-callback
                          (fn [code provider] {:access-token "token-token"})}
-          #(is (= :success (:response (handler request)))))))))
+          #(is (= :success (:response (handler request)))))))
+
+    (testing "Success with custom :check-state-fn true/false"
+      (with-redefs-fn {#'geheimtur.impl.oauth2/process-callback (constantly true)}
+        #(let [{true-handler :enter} (callback-handler
+                                      (assoc-in providers
+                                                [:github :check-state-fn]
+                                                (constantly true)))
+               {false-handler :enter} (callback-handler
+                                       (assoc-in providers
+                                                 [:github :check-state-fn]
+                                                 (constantly false)))]
+           (is (= "/return" (get-in (:response (true-handler request)) [:headers "Location"])))
+           (is (= "/unauthorized" (get-in (:response (false-handler request)) [:headers "Location"]))))))
+    (testing "Failure with custom :check-state-fn true/false"
+      (with-redefs-fn {#'geheimtur.impl.oauth2/process-callback (constantly false)}
+        #(let [{true-handler :enter} (callback-handler
+                                      (assoc-in providers
+                                                [:github :check-state-fn]
+                                                (constantly true)))
+               {false-handler :enter} (callback-handler
+                                       (assoc-in providers
+                                                 [:github :check-state-fn]
+                                                 (constantly false)))]
+           (is (= "/unauthorized" (get-in (:response (true-handler request)) [:headers "Location"])))
+           (is (= "/unauthorized" (get-in (:response (false-handler request)) [:headers "Location"]))))))))
