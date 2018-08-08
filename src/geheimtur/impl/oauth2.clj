@@ -22,7 +22,7 @@
        (str url "?")))
 
 (defn authenticate-handler
-  "Creates a handler that redirects users to OAuth2 providers based on a map of providers.
+  "Creates a handler that redirects users to OAuth2 service providers using a providers configuration map or a function.
 
    Example:
    (def providers
@@ -50,11 +50,13 @@
       :user-info-parse-fn - if defined, will be applied to the response of user's details endpoint
       :on-success-handler - a function that accepts a request context and an obtained identity/access token map and returns a correct ring response.
                             It is called only if an identity/access token is resolved."
-  [providers]
+  [providers-map-or-fn]
+  {:pre [(or (map? providers-map-or-fn) (fn? providers-map-or-fn))]}
   (h/handler
    ::authenticate-handler
    (fn [req]
-     (let [{:keys [query-params] :as request} req]
+     (let [{:keys [query-params] :as request} req
+           providers                          (if (fn? providers-map-or-fn) (providers-map-or-fn) providers-map-or-fn)]
        (when-let [provider (:provider query-params)]
          (when-let [{:keys [auth-url
                             client-id
@@ -62,8 +64,8 @@
                             callback-uri
                             client-params
                             create-state-fn]
-                     :or {create-state-fn
-                          create-afs-token}} (get providers (keyword provider))]
+                     :or   {create-state-fn
+                            create-afs-token}} (get providers (keyword provider))]
            (let [token (create-state-fn request)
                  query (merge client-params {:client_id     client-id
                                              :response_type "code"
@@ -151,20 +153,22 @@
        (= state token)))
 
 (defn callback-handler
-  "Creates an OAuth call-back handler based on a map of OAuth providers.
+  "Creates an OAuth callback handler using on a service providers configuration map or a function.
 
   If authentication flow fails for any reason, the user will be redirected to /unauthorized url."
-  [providers]
+  [providers-map-or-fn]
+  {:pre [(or (map? providers-map-or-fn) (fn? providers-map-or-fn))]}
   (h/before
    ::callback-handler
    (fn [{request :request :as context}]
-     (let [{:keys [query-params session]}     request
-           {:keys [state code]}               query-params
-           {:keys [return token provider]}    (::callback-state session)
+     (let [{:keys [query-params session]}   request
+           {:keys [state code]}             query-params
+           {:keys [return token provider]}  (::callback-state session)
+           providers                        (if (fn? providers-map-or-fn) (providers-map-or-fn) providers-map-or-fn)
            {:keys [on-success-handler
-                   check-state-fn] :as p
-            :or {check-state-fn
-                 default-check-state-fn}} (get providers (keyword provider))]
+                   check-state-fn] :as   p
+            :or   {check-state-fn
+                   default-check-state-fn}} (get providers (keyword provider))]
        (assoc context :response
               (if (and code return provider p (check-state-fn context state token))
                 (if-let [identity (process-callback code p)]
@@ -173,3 +177,4 @@
                     (authenticate (response/redirect return) identity))
                   (response/redirect "/unauthorized"))
                 (response/redirect "/unauthorized")))))))
+
