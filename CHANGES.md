@@ -1,5 +1,9 @@
 # Changes
 
+## v0.3.5
+
+Starting with version 0.3.5 `authenticate-handler` and `callback-handler` of interactive OAuth interceptor accept either a map or a function that returns a map of OAuth providers' configuration.
+
 ## v0.3.0
 
 Starting with version 0.3.0 the signatures of all credential/callback functions have changed. Now all the functions accept the request context as their first parameter and a map of parsed credentials (if they accepted them before).

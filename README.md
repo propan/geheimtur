@@ -20,7 +20,7 @@ The ChangeLog and migration instructions can be found in [CHANGES.md](CHANGES.md
 Include the library in your leiningen project dependencies:
 
 ```clojure
-[geheimtur "0.3.4"]
+[geheimtur "0.3.5"]
 ```
 
 ## Examples
