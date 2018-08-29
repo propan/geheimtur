@@ -1,6 +1,7 @@
 (ns geheimtur.impl.oauth2
   (:require [clj-http.client :as client]
             [clojure.walk :refer [keywordize-keys]]
+            [clojure.string :as str]
             [geheimtur.util.response :as response]
             [geheimtur.util.auth :refer [authenticate]]
             [io.pedestal.log :as log]
@@ -19,7 +20,7 @@
   [url query]
   (->> query
        ring-codec/form-encode
-       (str url "?")))
+       (str url (if (str/includes? url "?") "&" "?"))))
 
 (defn authenticate-handler
   "Creates a handler that redirects users to OAuth2 service providers using a providers configuration map or a function.

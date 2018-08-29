@@ -30,7 +30,7 @@
                                            (= access-token "token-token"))
                                       :success))}})
 
-(defn- assoc-in-ps 
+(defn- assoc-in-ps
   [ps ks v]
   (if (fn? ps)
     (fn [] (assoc-in (ps) ks v))
@@ -40,7 +40,11 @@
   (let [url "http://domain.com"]
     (are [result query] (= result (create-url url query))
       (str url "?")        {}
-      (str url "?a=b&c=d") (sorted-map :a "b" :c "d"))))
+      (str url "?a=b&c=d") (sorted-map :a "b" :c "d")))
+  (let [url "http://domain.com?partner_id=abacaba"]
+    (are [result query] (= result (create-url url query))
+      (str url "&")        {}
+      (str url "&a=b&c=d") (sorted-map :a "b" :c "d"))))
 
 (defn authenticate-handler-with-providers
   [label providers]
@@ -80,7 +84,7 @@
                   :scope         "user:email"
                   :redirect_uri  "/oauth.callback"} query)))))
 
-    (testing "stores custom state in the session" 
+    (testing "stores custom state in the session"
       (let [providers            (assoc-in-ps providers [:github :create-state-fn] (constantly "foo"))
             {handler :enter}     (authenticate-handler providers)
             {response :response} (handler {:request {:query-params {:provider "github" :return "/return"}}})
