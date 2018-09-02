@@ -1,7 +1,6 @@
 (ns geheimtur.impl.oauth2
   (:require [clj-http.client :as client]
             [clojure.walk :refer [keywordize-keys]]
-            [clojure.string :as str]
             [geheimtur.util.response :as response]
             [geheimtur.util.auth :refer [authenticate]]
             [io.pedestal.log :as log]
