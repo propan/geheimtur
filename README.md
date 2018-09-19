@@ -1,4 +1,4 @@
-# Geheimtür [![Build Status](https://travis-ci.org/propan/geheimtur.png)](https://travis-ci.org/propan/geheimtur)
+# Geheimtür [![Build Status](https://travis-ci.org/propan/geheimtur.png)](https://travis-ci.org/propan/geheimtur) [![cljdoc](https://cljdoc.xyz/badge/geheimtur/geheimtur)](https://cljdoc.xyz/d/geheimtur/geheimtur/CURRENT)
 
 a Clojure library that allows you to secure your Pedestal applications with minimum efforts.
 
@@ -20,7 +20,7 @@ The ChangeLog and migration instructions can be found in [CHANGES.md](CHANGES.md
 Include the library in your leiningen project dependencies:
 
 ```clojure
-[geheimtur "0.3.5"]
+[geheimtur "0.4.0"]
 ```
 
 ## Examples
