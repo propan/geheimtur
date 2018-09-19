@@ -1,6 +1,6 @@
 (ns geheimtur.impl.oauth2-test
   (:require [clojure.test :refer :all]
-            [geheimtur.impl.oauth2 :refer :all]
+            [geheimtur.impl.oauth2 :refer :all :as oauth2]
             [geheimtur.util.auth :as auth]
             [geheimtur.util.url :refer [get-query]])
   (:import [java.net URL]))
@@ -69,7 +69,7 @@
     (testing "successfuly redirects and stores state in the session"
       (let [{handler :enter}     (authenticate-handler providers)
             {response :response} (handler {:request {:query-params {:provider "github" :return "/return"}}})
-            session-status       (get-in response [:session ::geheimtur.impl.oauth2/callback-state])
+            session-status       (get-in response [:session ::oauth2/callback-state])
             location             (get-in response [:headers "Location"])]
         (is (not (nil? response)))
         (is (= 302 (:status response)))
@@ -88,7 +88,7 @@
       (let [providers            (assoc-in-ps providers [:github :create-state-fn] (constantly "foo"))
             {handler :enter}     (authenticate-handler providers)
             {response :response} (handler {:request {:query-params {:provider "github" :return "/return"}}})
-            session-status       (get-in response [:session ::geheimtur.impl.oauth2/callback-state])
+            session-status       (get-in response [:session ::oauth2/callback-state])
             location             (get-in response [:headers "Location"])
             query                (get-query location)]
         (is (= "foo" (:token session-status) (:state query)))))))
@@ -206,16 +206,16 @@
   (testing (str "Providers as " label ":")
     (let [{handler :enter} (callback-handler providers)
           request          {:request {:query-params {:state "123" :code  "456"}
-                                      :session      {::geheimtur.impl.oauth2/callback-state {:return   "/return"
-                                                                                             :token    "123"
-                                                                                             :provider "github"}}}}]
+                                      :session      {::oauth2/callback-state {:return   "/return"
+                                                                              :token    "123"
+                                                                              :provider "github"}}}}]
       (testing "redirects on authorization error"
         (let [{response :response} (handler {:request {}})]
           (is (= 302 (:status response)))
           (is (= "/unauthorized" (get-in response [:headers "Location"]))))
 
         (let [{response :response}
-              (handler (assoc-in request [:session ::geheimtur.impl.oauth2/callback-state :token] "123456"))]
+              (handler (assoc-in request [:session ::oauth2/callback-state :token] "123456"))]
           (is (= 302 (:status response)))
           (is (= "/unauthorized" (get-in response [:headers "Location"])))))
 
@@ -227,10 +227,10 @@
           #(let [{response :response} (handler request)]
              (is (= 302 (:status response)))
              (is (= "/return" (get-in response [:headers "Location"])))
-             (is (= {::geheimtur.util.auth/identity :authenticated-user} (:session response))))))
+             (is (= {::auth/identity :authenticated-user} (:session response))))))
 
       (testing "success with :on-success-handler"
-        (let [request (assoc-in request [:request :session ::geheimtur.impl.oauth2/callback-state :provider] "github-2")]
+        (let [request (assoc-in request [:request :session ::oauth2/callback-state :provider] "github-2")]
           (with-redefs-fn {#'geheimtur.impl.oauth2/process-callback (fn [code provider]
                                                                       {:access-token "token-token"})}
             #(is (= :success (:response (handler request)))))))

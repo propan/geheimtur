@@ -3,6 +3,5 @@ lein: lein
 script: lein all do clean, test
 jdk:
   - openjdk8
-  - openjdk9
   - oraclejdk8
   - oraclejdk9

@@ -16,6 +16,7 @@
                  [javax.servlet/javax.servlet-api "3.1.0" :scope "test"]
                  [org.slf4j/slf4j-nop "1.7.25" :scope "test"]]
   :deploy-repositories [["releases" :clojars {:creds :gpg}]]
-  :profiles {:dev {:dependencies [[org.clojure/clojure "1.8.0"]]}
+  :profiles {:dev {:dependencies [[org.clojure/clojure "1.9.0"]]}
+             :1.8 {:dependencies [[org.clojure/clojure "1.8.0"]]}
              :1.7 {:dependencies [[org.clojure/clojure "1.7.0"]]}}
-  :aliases {"all" ["with-profile" "dev,1.7:dev"]})
+  :aliases {"all" ["with-profile" "dev,1.8:dev,1.7:dev"]})
