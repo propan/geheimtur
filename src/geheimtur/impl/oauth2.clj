@@ -19,7 +19,7 @@
   [url query]
   (->> query
        ring-codec/form-encode
-       (str url (if (-> url .toString (.contains "?")) "&" "?"))))
+       (str url (if (.contains url "?") "&" "?"))))
 
 (defn authenticate-handler
   "Creates a handler that redirects users to OAuth2 service providers using a providers configuration map or a function.
