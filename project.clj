@@ -1,4 +1,4 @@
-(defproject geheimtur "0.3.7"
+(defproject geheimtur "0.3.8-SNAPSHOT"
   :description "a secret door to your Pedestal application"
   :url "http://github.com/propan/geheimtur"
   :license {:name "Eclipse Public License"
