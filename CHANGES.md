@@ -1,5 +1,9 @@
 # Changes
 
+## v0.4.0
+
+Due to updated version of `io.pedestal/pedestal.service`, the library requires Java 1.8+.
+
 ## v0.3.5
 
 Starting with version 0.3.5 `authenticate-handler` and `callback-handler` of interactive OAuth interceptor accept either a map or a function that returns a map of OAuth providers' configuration.
