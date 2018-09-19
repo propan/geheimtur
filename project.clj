@@ -4,7 +4,7 @@
   :license {:name "Eclipse Public License"
             :url  "http://www.eclipse.org/legal/epl-v10.html"}
   :exclusions [org.clojure/clojure]
-  :dependencies [[io.pedestal/pedestal.service "0.5.4"]
+  :dependencies [[io.pedestal/pedestal.service "0.5.2"]
                  [org.mindrot/jbcrypt "0.4"]
                  [commons-codec "1.10"]
                  [clj-http "3.4.1"]
